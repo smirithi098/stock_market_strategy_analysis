@@ -10,11 +10,11 @@ cmp = NSE()
 # define static variables
 stock_series = 'EQ'
 today_date = date.today()
-path = "S:/Dissertation 2023/Stock market analysis/data_files/*.csv"
+path = "S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/*.csv"
 
 # call the method to get current market price
 for fname in glob.glob(path):
     stock_symbol = fname.split('\\')[1].split('.')[0].upper()
-    f_name = f"S:/Dissertation 2023/Stock market analysis/data_files/{stock_symbol.lower()}.csv"
+    f_name = f"S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/{stock_symbol.lower()}.csv"
 
     cmp.get_current_data(symbol=stock_symbol, series=stock_series, current_date=today_date, file_path=f_name)

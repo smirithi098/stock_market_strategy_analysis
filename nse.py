@@ -48,7 +48,7 @@ class NSE:
             final_df = pd.concat(list_df)
             final_df = final_df.sort_index()
 
-            final_df.to_csv(f"S:/Dissertation 2023/Stock market analysis/data_files/{symbol.lower()}.csv",
+            final_df.to_csv(f"S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/{symbol.lower()}.csv",
                             sep=',', header=True, index=True)
 
         except:
