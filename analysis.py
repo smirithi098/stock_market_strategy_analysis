@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date, timedelta
-import stock_indicators as si
+from stock_market_strategy_analysis.indicators import calculate_rsi, calculate_macd
 
 #%%  Function - Drop columns, Update column names & Update frequency of index
 def data_preparation(df):
@@ -28,5 +28,14 @@ data = pd.read_csv("S:/Dissertation 2023/Stock market analysis/stock_market_stra
 
 axis_df = data_preparation(data)
 
+#%% add technical indicators
+
+# RSI - Relative Strength Index
+axis_df['rsi'] = calculate_rsi(axis_df['close'], 14)
+
+# MACD - Moving Average Convergence Divergence
+macd_signal = calculate_macd(axis_df['close'], 12, 26, 9)
+axis_df['macd_line'] = macd_signal[0]
+axis_df['signal_line'] = macd_signal[1]
 
 
