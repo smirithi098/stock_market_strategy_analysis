@@ -5,6 +5,10 @@ def calculate_sma(price_col, period):
     sma = pd.Series(price_col.transform(lambda x: x.rolling(window=period).mean()))
     return sma
 
+def calculate_std_ma(price_col, period):
+    std_ma = pd.Series(price_col.transform(lambda x: x.rolling(window=period).std()))
+    return std_ma
+
 def calculate_ema(price_col, period):
     ema = pd.Series(price_col.ewm(span=period, min_periods=period).mean())
     return ema
@@ -38,3 +42,13 @@ def calculate_macd(price_col, slow_period, fast_period, signal_period):
     signal = calculate_ema(price_col, signal_period)
 
     return macd, signal
+
+def calculate_bollinger_bands(price_col, ma_period, std_value):
+    ma_line = calculate_sma(price_col, ma_period)
+    std_line = calculate_std_ma(price_col, ma_period)
+
+    upper_band = ma_line + (std_value * std_line)
+    lower_band = ma_line - (std_value * std_line)
+
+    return upper_band, lower_band
+
