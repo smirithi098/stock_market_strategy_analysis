@@ -29,41 +29,62 @@ for script in transcript_df['transcript']:
 
 #%% Function to generate frequency table for all words in all sentences of the paragraph
 
-def create_freq_table(words_list, upper_thresh, lower_thresh):
+def create_freq_table(text):
+
+    # tokenize the text into sentences
+    all_sentences = sent_tokenize(text)
+    no_of_sentences = len(all_sentences)
+    print(f"Number of sentences in text: {no_of_sentences}")
+
+    # empty dictionary for frequency matrix
+    frequency_matrix = {}
+
     # get the stop words for english language
     stop_words = set(stopwords.words("english"))
 
     # initialize the object for stemmer class
     stemmer = PorterStemmer()
 
-    # empty dictionary to store the word count of every word in the text
-    frequency_table = {}
-
     """Stem the words and check if they are in the stop words. 
     If not, increase the count of that word in the frequency table"""
-    for word in words_list:
-        for w in word:
-            w = stemmer.stem(w)
+    for i, sentence in enumerate(all_sentences, 1):
+        # empty dictionary to store the word count of every word in the text
+        frequency_table = {}
 
-            if w in stop_words:
+        # tokenize the sentence into words
+        words = word_tokenize(sentence)
+
+        for word in words:
+            word = stemmer.stem(word.lower())
+
+            if word in stop_words:
                 continue
-            if w in frequency_table:
-                frequency_table[w] += 1
+
+            if word in frequency_table:
+                frequency_table[word] += 1
             else:
-                frequency_table[w] = 1
+                frequency_table[word] = 1
 
-    # get the maximum frequency value from the entire text
-    max_frequency = float(max(frequency_table.values()))
+        frequency_matrix[i] = frequency_table
 
-    freq_copy = frequency_table.copy()
+    return frequency_matrix
 
-    for key in freq_copy.keys():
-        frequency_table[key] = frequency_table[key]/max_frequency
+#%% Create the Term frequency matrix (TF)
 
-        if frequency_table[key] >= upper_thresh or frequency_table[key] <= lower_thresh:
-            del frequency_table[key]
+def create_tf_matrix(freq_mat):
+    term_frequency_matrix = {}
 
-    return frequency_table
+    for sentence, freq_table in freq_mat.items():
+        term_frequency_table = {}
+
+        total_words_in_sentence = len(freq_table)
+
+        for word, count in freq_table.items():
+            term_frequency_table[word] = count / total_words_in_sentence
+
+        term_frequency_matrix[sentence] = term_frequency_table
+
+    return term_frequency_matrix
 
 #%% Function to get the ranking of individual sentences in the text
 
