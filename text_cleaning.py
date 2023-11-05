@@ -1,14 +1,10 @@
 #%% import libraries
-import math
 import string
 import re
-from collections import Counter
 
 import numpy as np
 import pandas as pd
 
-# from nltk.corpus import stopwords
-# from nltk import sent_tokenize, word_tokenize, PorterStemmer
 import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
 
@@ -31,6 +27,9 @@ def clean_transcript(text):
 transformed_scripts = []
 for script in transcript_df['transcript']:
     transformed_scripts.append(clean_transcript(script))
+
+transcript_df['transcript'] = transformed_scripts
+transcript_df['summary_percentage'] = [0.075, 0.19, 0.40, 0.12]
 
 #%% Function to get the summary
 
@@ -89,19 +88,25 @@ def get_summary(text, n):
     return final_summary
 
 #%% Call the function for all transcripts
-def summarization():
+def summarization(text, value):
+    result = get_summary(text, value)
 
-    summary_percentage = {transformed_scripts[0]: 0.075, transformed_scripts[1]: 0.19, transformed_scripts[2]: 0.4,
-                          transformed_scripts[3]: 0.12}
+    print("*"*30)
+    print(f"length of original text: {len(text)}")
+    print("*"*30)
+    print(f"Summary of the given text:\n{result}")
+    print("*"*30)
+    print(f"length of summary text: {len(result)}")
 
-    for key, value in summary_percentage:
-        result = get_summary(key, value)
+    return result
 
-        print("*"*30)
-        print(f"length of original text: {len(key)}")
-        print("*"*30)
-        print(f"Summary of the given text:\n{result}")
-        print("*"*30)
-        print(f"length of summary text: {len(result)}")
+#%%
 
+summary_list = []
 
+for i in transcript_df.index:
+    script = transcript_df.iloc[i, 1]
+    percentage = transcript_df.iloc[i, 2]
+    summary_list.append(summarization(script, percentage))
+
+transcript_df['summary'] = summary_list
