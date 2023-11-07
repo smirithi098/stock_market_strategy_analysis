@@ -17,6 +17,7 @@ def data_preparation(df):
                                   'ltp ': 'ltp', 'close ': 'close', 'vwap ': 'vwap', 'VOLUME ': 'volume'})
 
     df = df.drop_duplicates()
+    df.index = pd.to_datetime(df.index)
     df = df.resample('D').asfreq()
     df = df.interpolate('linear')
 
@@ -29,19 +30,31 @@ data = pd.read_csv("S:/Dissertation 2023/Stock market analysis/stock_market_stra
 
 axis_df = data_preparation(data)
 
-#%% add technical indicators
+#%% Read the strategy data
 
-# RSI - Relative Strength Index
-axis_df['rsi'] = calculate_rsi(axis_df['close'], 14)
+strategies = pd.read_csv("S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/strategies.csv")
 
-# MACD - Moving Average Convergence Divergence
-macd_signal = calculate_macd(axis_df['close'], 12, 26, 9)
-axis_df['macd_line'] = macd_signal[0]
-axis_df['signal_line'] = macd_signal[1]
+#%% function to add technical indicators to df
 
-# Bollinger bands
-bands = calculate_bollinger_bands(axis_df['close'], 30, 2)
-axis_df['upper_bollinger_band'] = bands[0]
-axis_df['lower_bollinger_band'] = bands[1]
+def add_indicators(df, close_price):
 
+    # RSI - Relative Strength Index
+    df['rsi'] = calculate_rsi(close_price, 14)
+
+    # MACD - Moving Average Convergence Divergence
+    macd_signal = calculate_macd(close_price, 12, 26, 9)
+    df['macd_line'] = macd_signal[0]
+    df['signal_line'] = macd_signal[1]
+
+    # Bollinger bands
+    bands = calculate_bollinger_bands(close_price, 30, 2)
+    df['upper_bollinger_band'] = bands[0]
+    df['lower_bollinger_band'] = bands[1]
+
+    # stochastic_rsi
+    df['stoch_rsi'] = calculate_stochastic_rsi(close_price, 13)
+
+#%% call the function to get the technical indicators
+
+add_indicators(axis_df, axis_df['close'])
 
