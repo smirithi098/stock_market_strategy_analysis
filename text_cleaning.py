@@ -110,3 +110,9 @@ for i in transcript_df.index:
     summary_list.append(summarization(script, percentage))
 
 transcript_df['summary'] = summary_list
+
+#%% Save the final dataframe as csv file
+
+path_to_save = "S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files"
+
+transcript_df.to_csv(path_or_buf=f"{path_to_save}/strategies.csv", header=True, index=False)

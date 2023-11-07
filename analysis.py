@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date, timedelta
-from stock_market_strategy_analysis.indicators import calculate_rsi, calculate_macd, calculate_bollinger_bands
+from stock_market_strategy_analysis.indicators import calculate_rsi, \
+    calculate_macd, calculate_bollinger_bands, calculate_stochastic_rsi
 
 #%%  Function - Drop columns, Update column names & Update frequency of index
 def data_preparation(df):
