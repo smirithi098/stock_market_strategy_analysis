@@ -73,25 +73,32 @@ and the price is also closed below the 50 EMA. Here, the stochastic RSI crossed 
 
 #%% calculate the buy-sell points in the data
 
-all_data[:]['signal_1'] = np.where((all_data['stoch_rsi'] > 20) & (all_data['stoch_rsi'] <= 50) & (all_data['ema_50'] > all_data['ema_100']), 1, 0)
+all_data.loc[:, 'signal_1'] = np.where((all_data['stoch_rsi'] > 20) & (all_data['stoch_rsi'] <= 50) & (all_data['ema_50'] > all_data['ema_100']), 1, 0)
 all_data[:]['buy_sell_position'] = all_data['signal_1'].diff()
 
 #%% visualize the buy sell points with the technical indicators in place
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 6), sharex=True,
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
                                gridspec_kw={'height_ratios': [3, 1]})
 
-ax1.plot(all_data.close, color='black', label='Close price', linewidth=1)
-ax1.plot(all_data.ema_50, color='orange', label='50-day EMA', linewidth=1)
-ax1.plot(all_data.ema_100, color='blue', label='100-day EMA', linewidth=1)
+ax1.plot(all_data.close, color='midnightblue', label='Close price', linewidth=1)
+ax1.plot(all_data.ema_50, color='lightseagreen', label='50-day EMA', linewidth=1)
+ax1.plot(all_data.ema_100, color='tomato', label='100-day EMA', linewidth=1)
 ax1.set_xlim([all_data.index[0], all_data.index[-1]])
 
-ax2.plot(all_data.stoch_rsi, color='red', linewidth=0.8)
-ax2.axhline(y=20, color='darkgrey', linestyle='-')
-ax2.axhline(y=80, color='darkgrey', linestyle='-')
+ax1.plot(all_data[all_data['buy_sell_position'] == 1].index,
+         all_data['ema_50'][all_data['buy_sell_position'] == 1],
+         '^', markersize=5, color='green', label='buy')
+ax1.plot(all_data[all_data['buy_sell_position'] == -1].index,
+         all_data['ema_100'][all_data['buy_sell_position'] == -1],
+         'v', markersize=5, color='red', label='sell')
+ax1.set_title("Stochastic RSI with 50 & 100 day EMA strategy", fontsize=15)
+
+ax2.plot(all_data.stoch_rsi, color='dodgerblue', linewidth=0.8)
+ax2.axhline(y=20, color='slategrey', linestyle='-')
+ax2.axhline(y=80, color='slategrey', linestyle='-')
 ax2.set_ylim([0, 100])
 
-plt.title("Stochastic RSI with 50 & 100 day EMA strategy")
-plt.legend()
+plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
