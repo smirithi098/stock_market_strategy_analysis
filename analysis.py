@@ -58,9 +58,11 @@ def stochastic_rsi_with_ema(df, close_price):
 
 stochastic_rsi_with_ema(axis_df, axis_df['close'])
 
-#%%
+#%% Filter out rows with value not null
 
-all_data = axis_df[axis_df[['stoch_rsi', 'ema_50', 'ema_100']].notnull().all(1)]
+start_index = axis_df.index.get_loc('2006-05-01')
+end_index = axis_df.index.get_loc('2023-05-31')
+all_data = axis_df.loc[axis_df.index[start_index]:axis_df.index[end_index], :]
 """
 So go to the indicator settings and change the length from 9 to 50. 
 And here, the stochastic RSI crossed the 80 level to the downside, indicating a sell signal, 
@@ -68,9 +70,28 @@ and the price is also closed below the 50 EMA. Both EMAs are sloped downwards,
 and the price is also closed below the 50 EMA. Here, the stochastic RSI crossed the 20 level to the upside,
  indicating a buy signal, and the 50 EMA is above the 100 EMA, and the price is also closed above the 50 EMA.
 """
-all_data.loc[:, 'signal_1'] = 0.0
-all_data.loc[:, 'signal_1'] = np.where(20 < all_data['stoch_rsi'].all(1) < 70, 1.0, 0.0)
 
+#%% calculate the buy-sell points in the data
 
+all_data[:]['signal_1'] = np.where((all_data['stoch_rsi'] > 20) & (all_data['stoch_rsi'] <= 50) & (all_data['ema_50'] > all_data['ema_100']), 1, 0)
+all_data[:]['buy_sell_position'] = all_data['signal_1'].diff()
 
+#%% visualize the buy sell points with the technical indicators in place
 
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 6), sharex=True,
+                               gridspec_kw={'height_ratios': [3, 1]})
+
+ax1.plot(all_data.close, color='black', label='Close price', linewidth=1)
+ax1.plot(all_data.ema_50, color='orange', label='50-day EMA', linewidth=1)
+ax1.plot(all_data.ema_100, color='blue', label='100-day EMA', linewidth=1)
+ax1.set_xlim([all_data.index[0], all_data.index[-1]])
+
+ax2.plot(all_data.stoch_rsi, color='red', linewidth=0.8)
+ax2.axhline(y=20, color='darkgrey', linestyle='-')
+ax2.axhline(y=80, color='darkgrey', linestyle='-')
+ax2.set_ylim([0, 100])
+
+plt.title("Stochastic RSI with 50 & 100 day EMA strategy")
+plt.legend()
+plt.tight_layout()
+plt.show()
