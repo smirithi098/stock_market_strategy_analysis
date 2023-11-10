@@ -73,10 +73,43 @@ and the price is also closed below the 50 EMA. Here, the stochastic RSI crossed 
 
 #%% calculate the buy-sell points in the data
 
-all_data.loc[:, 'signal_1'] = np.where((all_data['stoch_rsi'] > 20) & (all_data['stoch_rsi'] <= 50) & (all_data['ema_50'] > all_data['ema_100']), 1, 0)
-all_data[:]['buy_sell_position'] = all_data['signal_1'].diff()
+all_data[:]['ema_diff'] = all_data['ema_50'] - all_data['ema_100']
+all_data[:]['buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
+                                         (all_data['ema_50'] > all_data['ema_100']),
+                                         1, 0)
+all_data[:]['sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
+                                          (all_data['ema_50'] < all_data['ema_100']),
+                                          1, 0)
+all_data[:]['buy_sell_position'] = all_data['buy_signal'] - all_data['sell_signal']
+
+#%%
+
+crossover_points = pd.DataFrame(all_data.loc[(-0.6 < all_data['ema_diff'] < 0.6), 'ema_50'])
+crossover_points['diff'] = crossover_points['ema_50'].diff()
+
+crossover_points = crossover_points.dropna(axis=0)
+
+#%%
+
+for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
+    print(i)
+
+    if val < 0:
+        if -10 < crossover_points.loc[crossover_points.index[i + 1], 'diff'] < 10:
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
+        else:
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'buy'
+
+    elif val > 0:
+        if -10 < crossover_points.loc[crossover_points.index[i + 1], 'diff'] < 10:
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
+        else:
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
 
 #%% visualize the buy sell points with the technical indicators in place
+
+# buy_signals = all_data.loc[(all_data['ema_50'] > all_data['ema_100']) & (all_data['buy_sell_position'] == 1), 'ema_50']
+# sell_signals = all_data.loc[(all_data['ema_50'] < all_data['ema_100']) & (all_data['buy_sell_position'] == -1), 'ema_50']
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
                                gridspec_kw={'height_ratios': [3, 1]})
@@ -84,14 +117,15 @@ fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
 ax1.plot(all_data.close, color='midnightblue', label='Close price', linewidth=1)
 ax1.plot(all_data.ema_50, color='lightseagreen', label='50-day EMA', linewidth=1)
 ax1.plot(all_data.ema_100, color='tomato', label='100-day EMA', linewidth=1)
-ax1.set_xlim([all_data.index[0], all_data.index[-1]])
+ax1.set_xlim([all_data.index[0], all_data.index[3167]])
+ax1.legend()
 
-ax1.plot(all_data[all_data['buy_sell_position'] == 1].index,
-         all_data['ema_50'][all_data['buy_sell_position'] == 1],
-         '^', markersize=5, color='green', label='buy')
-ax1.plot(all_data[all_data['buy_sell_position'] == -1].index,
-         all_data['ema_100'][all_data['buy_sell_position'] == -1],
-         'v', markersize=5, color='red', label='sell')
+# ax1.plot(buy_signals.index,
+#          buy_signals,
+#          '^', markersize=5, color='green', label='buy')
+# ax1.plot(buy_sell_signals.index,
+#          buy_sell_signals,
+#          'v', markersize=5, color='red', label='sell')
 ax1.set_title("Stochastic RSI with 50 & 100 day EMA strategy", fontsize=15)
 
 ax2.plot(all_data.stoch_rsi, color='dodgerblue', linewidth=0.8)
@@ -102,3 +136,29 @@ ax2.set_ylim([0, 100])
 plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
+
+#%%
+
+import plotly.graph_objects as go
+import plotly.io as pio
+pio.renderers.default = 'png'
+
+fig = go.Figure()
+
+# Close price line
+fig.add_trace(go.Scatter(x=all_data.index, y=all_data['close'], mode='lines', name='Close Price'))
+
+# EMA lines
+fig.add_trace(go.Scatter(x=all_data.index, y=all_data['ema_50'], mode='lines', name='50-day EMA'))
+fig.add_trace(go.Scatter(x=all_data.index, y=all_data['ema_100'], mode='lines', name='100-day EMA'))
+
+# Stochastic RSI lines
+fig.add_trace(go.Scatter(x=all_data.index, y=all_data['stoch_rsi'], mode='lines', name='StochRSI'))
+
+
+fig.update_layout(title='Stock Analysis',
+                  xaxis_title='Date',
+                  yaxis_title='Price',
+                  xaxis_rangeslider_visible=True)
+
+fig.show()
