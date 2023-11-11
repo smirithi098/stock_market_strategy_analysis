@@ -78,15 +78,15 @@ all_data[:]['ema_diff'] = all_data['ema_50'] - all_data['ema_100']
 all_data[:]['buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
                                          (all_data['ema_50'] > all_data['ema_100']),
                                          1, 0)
-"""all_data.loc[:, 'buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
-                                         (all_data['ema_50'] > all_data['ema_100']),
-                                         1, 0)"""
+# all_data.loc[:, 'buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
+#                                          (all_data['ema_50'] > all_data['ema_100']),
+#                                          1, 0)
 all_data[:]['sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
                                           (all_data['ema_50'] < all_data['ema_100']),
                                           1, 0)
-"""all_data.loc[:, 'sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
-                                          (all_data['ema_50'] < all_data['ema_100']),
-                                          1, 0)"""
+# all_data.loc[:, 'sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
+#                                           (all_data['ema_50'] < all_data['ema_100']),
+#                                           1, 0)
 
 #%%
 
@@ -119,6 +119,31 @@ for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
         else:
             print("dont sell here")
             crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
+
+#%%
+buy_sell_data = crossover_points[(crossover_points['position'] != 'nothing')]
+buy_sell_data = buy_sell_data.loc[:buy_sell_data.index[-3], :]
+
+temp = buy_sell_data.groupby((buy_sell_data['position'] != buy_sell_data['position'].shift()).cumsum()).apply(lambda x: (x.index[0], x.index[-1]))
+#%%
+for j, val in enumerate(buy_sell_data.loc[:, 'position'].to_list()[:-2]):
+    current_val = buy_sell_data.loc[buy_sell_data.index[j], 'ema_50']
+    next_val = buy_sell_data.loc[buy_sell_data.index[j+1], 'ema_50']
+    print(current_val, next_val)
+    if val == 'buy' and buy_sell_data.loc[buy_sell_data.index[j+1], 'position'] == 'buy':
+        print('buy check')
+        if current_val < next_val:
+            crossover_points.loc[buy_sell_data.index[j+1], 'position'] = 'nothing'
+        else:
+            crossover_points.loc[buy_sell_data.index[j], 'position'] = 'nothing'
+
+    elif val == 'sell' and buy_sell_data.loc[buy_sell_data.index[j+1], 'position'] == 'sell':
+        print('sell check')
+        if current_val > next_val:
+            crossover_points.loc[buy_sell_data.index[j+1], 'position'] = 'nothing'
+        else:
+            crossover_points.loc[buy_sell_data.index[j], 'position'] = 'nothing'
+
 #%% visualize the buy sell points with the technical indicators in place
 
 buy_signals = crossover_points.loc[crossover_points['position'] == 'buy', 'ema_50']
