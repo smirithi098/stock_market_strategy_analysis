@@ -74,17 +74,23 @@ and the price is also closed below the 50 EMA. Here, the stochastic RSI crossed 
 #%% calculate the buy-sell points in the data
 
 all_data[:]['ema_diff'] = all_data['ema_50'] - all_data['ema_100']
+# all_data.loc[:, 'ema_diff'] = all_data['ema_50'] - all_data['ema_100']
 all_data[:]['buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
                                          (all_data['ema_50'] > all_data['ema_100']),
                                          1, 0)
+"""all_data.loc[:, 'buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
+                                         (all_data['ema_50'] > all_data['ema_100']),
+                                         1, 0)"""
 all_data[:]['sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
                                           (all_data['ema_50'] < all_data['ema_100']),
                                           1, 0)
-all_data[:]['buy_sell_position'] = all_data['buy_signal'] - all_data['sell_signal']
+"""all_data.loc[:, 'sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
+                                          (all_data['ema_50'] < all_data['ema_100']),
+                                          1, 0)"""
 
 #%%
 
-crossover_points = pd.DataFrame(all_data.loc[(-0.6 < all_data['ema_diff'] < 0.6), 'ema_50'])
+crossover_points = pd.DataFrame(all_data.loc[all_data['ema_diff'].between(-1, 1), ['ema_50', 'ema_diff']])
 crossover_points['diff'] = crossover_points['ema_50'].diff()
 
 crossover_points = crossover_points.dropna(axis=0)
@@ -92,24 +98,31 @@ crossover_points = crossover_points.dropna(axis=0)
 #%%
 
 for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
-    print(i)
+    print(i, val)
 
     if val < 0:
-        if -10 < crossover_points.loc[crossover_points.index[i + 1], 'diff'] < 10:
-            crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
-        else:
+        print("buy signal")
+        if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i-1]:crossover_points.index[i+2], 'diff'].min())\
+                & (crossover_points.loc[crossover_points.index[i], 'ema_diff'] < crossover_points.loc[crossover_points.index[i+1], 'ema_diff']):
+            print("valid buy point")
             crossover_points.loc[crossover_points.index[i], 'position'] = 'buy'
-
-    elif val > 0:
-        if -10 < crossover_points.loc[crossover_points.index[i + 1], 'diff'] < 10:
-            crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
         else:
-            crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
+            print("dont buy here")
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
 
+    else:
+        print("sell signal")
+        if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i-1]:crossover_points.index[i+2], 'diff'].max())\
+                & (crossover_points.loc[crossover_points.index[i-1], 'ema_diff'] > crossover_points.loc[crossover_points.index[i], 'ema_diff']):
+            print("valid sell point")
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
+        else:
+            print("dont sell here")
+            crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
 #%% visualize the buy sell points with the technical indicators in place
 
-# buy_signals = all_data.loc[(all_data['ema_50'] > all_data['ema_100']) & (all_data['buy_sell_position'] == 1), 'ema_50']
-# sell_signals = all_data.loc[(all_data['ema_50'] < all_data['ema_100']) & (all_data['buy_sell_position'] == -1), 'ema_50']
+buy_signals = crossover_points.loc[crossover_points['position'] == 'buy', 'ema_50']
+sell_signals = crossover_points.loc[crossover_points['position'] == 'sell', 'ema_50']
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
                                gridspec_kw={'height_ratios': [3, 1]})
@@ -117,15 +130,15 @@ fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
 ax1.plot(all_data.close, color='midnightblue', label='Close price', linewidth=1)
 ax1.plot(all_data.ema_50, color='lightseagreen', label='50-day EMA', linewidth=1)
 ax1.plot(all_data.ema_100, color='tomato', label='100-day EMA', linewidth=1)
-ax1.set_xlim([all_data.index[0], all_data.index[3167]])
+ax1.set_xlim([all_data.index[0], all_data.index[-1]])
 ax1.legend()
 
-# ax1.plot(buy_signals.index,
-#          buy_signals,
-#          '^', markersize=5, color='green', label='buy')
-# ax1.plot(buy_sell_signals.index,
-#          buy_sell_signals,
-#          'v', markersize=5, color='red', label='sell')
+ax1.plot(buy_signals.index,
+         buy_signals,
+         '^', markersize=5, color='green', label='buy')
+ax1.plot(sell_signals.index,
+         sell_signals,
+         'v', markersize=5, color='red', label='sell')
 ax1.set_title("Stochastic RSI with 50 & 100 day EMA strategy", fontsize=15)
 
 ax2.plot(all_data.stoch_rsi, color='dodgerblue', linewidth=0.8)
