@@ -125,6 +125,17 @@ buy_sell_data = crossover_points[(crossover_points['position'] != 'nothing')]
 buy_sell_data = buy_sell_data.loc[:buy_sell_data.index[-3], :]
 
 temp = buy_sell_data.groupby((buy_sell_data['position'] != buy_sell_data['position'].shift()).cumsum()).apply(lambda x: (x.index[0], x.index[-1]))
+
+for tup in temp:
+    if len(buy_sell_data.loc[tup[0]:tup[1], :]) > 1:
+        if buy_sell_data.loc[tup[0], 'position'] == 'buy':
+            min_value = buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmin()
+            buy_sell_data.index[tup[0]:tup[1]].where(buy_sell_data.loc[tup[0]:tup[1], :] != min_value, 'nothing')
+
+        elif buy_sell_data.loc[tup[0], 'position'] == 'sell':
+            max_value = buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmax()
+            buy_sell_data.index[tup[0]:tup[1]].where(buy_sell_data.loc[tup[0]:tup[1], :] != max_value, 'nothing')
+
 #%%
 for j, val in enumerate(buy_sell_data.loc[:, 'position'].to_list()[:-2]):
     current_val = buy_sell_data.loc[buy_sell_data.index[j], 'ema_50']
