@@ -129,36 +129,19 @@ temp = buy_sell_data.groupby((buy_sell_data['position'] != buy_sell_data['positi
 for tup in temp:
     if len(buy_sell_data.loc[tup[0]:tup[1], :]) > 1:
         if buy_sell_data.loc[tup[0], 'position'] == 'buy':
-            min_value = buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmin()
-            buy_sell_data.index[tup[0]:tup[1]].where(buy_sell_data.loc[tup[0]:tup[1], :] != min_value, 'nothing')
+            min_value = pd.to_datetime(buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmin())
+            buy_sell_data.loc[tup[0]:tup[1], 'position'] = buy_sell_data.loc[tup[0]:tup[1], 'position'].where(
+                buy_sell_data.loc[tup[0]:tup[1], 'position'].index == min_value, 'nothing')
 
         elif buy_sell_data.loc[tup[0], 'position'] == 'sell':
-            max_value = buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmax()
-            buy_sell_data.index[tup[0]:tup[1]].where(buy_sell_data.loc[tup[0]:tup[1], :] != max_value, 'nothing')
-
-#%%
-for j, val in enumerate(buy_sell_data.loc[:, 'position'].to_list()[:-2]):
-    current_val = buy_sell_data.loc[buy_sell_data.index[j], 'ema_50']
-    next_val = buy_sell_data.loc[buy_sell_data.index[j+1], 'ema_50']
-    print(current_val, next_val)
-    if val == 'buy' and buy_sell_data.loc[buy_sell_data.index[j+1], 'position'] == 'buy':
-        print('buy check')
-        if current_val < next_val:
-            crossover_points.loc[buy_sell_data.index[j+1], 'position'] = 'nothing'
-        else:
-            crossover_points.loc[buy_sell_data.index[j], 'position'] = 'nothing'
-
-    elif val == 'sell' and buy_sell_data.loc[buy_sell_data.index[j+1], 'position'] == 'sell':
-        print('sell check')
-        if current_val > next_val:
-            crossover_points.loc[buy_sell_data.index[j+1], 'position'] = 'nothing'
-        else:
-            crossover_points.loc[buy_sell_data.index[j], 'position'] = 'nothing'
+            max_value = pd.to_datetime(buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmax())
+            buy_sell_data.loc[tup[0]:tup[1], 'position'] = buy_sell_data.loc[tup[0]:tup[1], 'position'].where(
+                buy_sell_data.loc[tup[0]:tup[1], 'position'].index == max_value, 'nothing')
 
 #%% visualize the buy sell points with the technical indicators in place
 
-buy_signals = crossover_points.loc[crossover_points['position'] == 'buy', 'ema_50']
-sell_signals = crossover_points.loc[crossover_points['position'] == 'sell', 'ema_50']
+buy_signals = buy_sell_data.loc[buy_sell_data['position'] == 'buy', 'ema_50']
+sell_signals = buy_sell_data.loc[buy_sell_data['position'] == 'sell', 'ema_50']
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
                                gridspec_kw={'height_ratios': [3, 1]})
@@ -185,29 +168,3 @@ ax2.set_ylim([0, 100])
 plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
-
-#%%
-
-import plotly.graph_objects as go
-import plotly.io as pio
-pio.renderers.default = 'png'
-
-fig = go.Figure()
-
-# Close price line
-fig.add_trace(go.Scatter(x=all_data.index, y=all_data['close'], mode='lines', name='Close Price'))
-
-# EMA lines
-fig.add_trace(go.Scatter(x=all_data.index, y=all_data['ema_50'], mode='lines', name='50-day EMA'))
-fig.add_trace(go.Scatter(x=all_data.index, y=all_data['ema_100'], mode='lines', name='100-day EMA'))
-
-# Stochastic RSI lines
-fig.add_trace(go.Scatter(x=all_data.index, y=all_data['stoch_rsi'], mode='lines', name='StochRSI'))
-
-
-fig.update_layout(title='Stock Analysis',
-                  xaxis_title='Date',
-                  yaxis_title='Price',
-                  xaxis_rangeslider_visible=True)
-
-fig.show()
