@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date, timedelta
 from stock_market_strategy_analysis.indicators import calculate_rsi, \
-    calculate_macd, calculate_bollinger_bands, calculate_stochastic_rsi, calculate_ema
+    calculate_macd, calculate_bollinger_bands, calculate_stochastic_rsi, calculate_ema, calculate_sma
 
 #%%  Function - Drop columns, Update column names & Update frequency of index
 def data_preparation(df):
@@ -30,22 +30,14 @@ data = pd.read_csv("S:/Dissertation 2023/Stock market analysis/stock_market_stra
 
 axis_df = data_preparation(data)
 
-#%% function to add technical indicators to df
+#%% function to add technical indicators to df for strategy 1
 
 def stochastic_rsi_with_ema(df, close_price):
 
-    # # RSI - Relative Strength Index
-    # df['rsi'] = calculate_rsi(close_price, 14)
-    #
     # # MACD - Moving Average Convergence Divergence
     # macd_signal = calculate_macd(close_price, 12, 26, 9)
     # df['macd_line'] = macd_signal[0]
     # df['signal_line'] = macd_signal[1]
-    #
-    # # Bollinger bands
-    # bands = calculate_bollinger_bands(close_price, 30, 2)
-    # df['upper_bollinger_band'] = bands[0]
-    # df['lower_bollinger_band'] = bands[1]
 
     # stochastic_rsi
     df['stoch_rsi'] = calculate_stochastic_rsi(close_price, 13)
@@ -101,23 +93,17 @@ for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
     print(i, val)
 
     if val < 0:
-        print("buy signal")
         if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i-1]:crossover_points.index[i+2], 'diff'].min())\
                 & (crossover_points.loc[crossover_points.index[i], 'ema_diff'] < crossover_points.loc[crossover_points.index[i+1], 'ema_diff']):
-            print("valid buy point")
             crossover_points.loc[crossover_points.index[i], 'position'] = 'buy'
         else:
-            print("dont buy here")
             crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
 
     else:
-        print("sell signal")
         if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i-1]:crossover_points.index[i+2], 'diff'].max())\
                 & (crossover_points.loc[crossover_points.index[i-1], 'ema_diff'] > crossover_points.loc[crossover_points.index[i], 'ema_diff']):
-            print("valid sell point")
             crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
         else:
-            print("dont sell here")
             crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
 
 #%%
@@ -146,21 +132,21 @@ sell_signals = buy_sell_data.loc[buy_sell_data['position'] == 'sell', 'ema_50']
 fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
                                gridspec_kw={'height_ratios': [3, 1]})
 
-ax1.plot(all_data.close, color='midnightblue', label='Close price', linewidth=1)
-ax1.plot(all_data.ema_50, color='lightseagreen', label='50-day EMA', linewidth=1)
-ax1.plot(all_data.ema_100, color='tomato', label='100-day EMA', linewidth=1)
+ax1.plot(all_data.close, color='palevioletred', label='Close price', linewidth=1)
+ax1.plot(all_data.ema_50, color='royalblue', label='50-day EMA', linewidth=1)
+ax1.plot(all_data.ema_100, color='darkorange', label='100-day EMA', linewidth=1)
 ax1.set_xlim([all_data.index[0], all_data.index[-1]])
 ax1.legend()
 
 ax1.plot(buy_signals.index,
          buy_signals,
-         '^', markersize=5, color='green', label='buy')
+         '^', markersize=8, color='green', label='buy')
 ax1.plot(sell_signals.index,
          sell_signals,
-         'v', markersize=5, color='red', label='sell')
+         'v', markersize=8, color='red', label='sell')
 ax1.set_title("Stochastic RSI with 50 & 100 day EMA strategy", fontsize=15)
 
-ax2.plot(all_data.stoch_rsi, color='dodgerblue', linewidth=0.8)
+ax2.plot(all_data.stoch_rsi, color='darkolivegreen', linewidth=0.8)
 ax2.axhline(y=20, color='slategrey', linestyle='-')
 ax2.axhline(y=80, color='slategrey', linestyle='-')
 ax2.set_ylim([0, 100])
@@ -168,3 +154,94 @@ ax2.set_ylim([0, 100])
 plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
+
+#%% function to add technical indicators for Strategy 2
+
+def bollinger_bands_with_rsi(df, close_price):
+
+    # RSI - Relative Strength Index
+    df['rsi'] = calculate_rsi(close_price, 13)
+
+    # Bollinger bands
+    bands = calculate_bollinger_bands(close_price, 30, 2)
+    df['upper_bollinger_band'] = bands[0]
+    df['lower_bollinger_band'] = bands[1]
+
+    # simple moving average
+    df['moving_average_line'] = calculate_sma(close_price, 30)
+
+#%% call the function to get the technical indicators
+
+bollinger_bands_with_rsi(axis_df, axis_df['close'])
+
+#%% Filter out the required columns for this strategy
+
+columns_req = ['close', 'rsi', 'upper_bollinger_band', 'moving_average_line', 'lower_bollinger_band']
+
+data_without_na = axis_df.dropna(subset=['rsi', 'upper_bollinger_band', 'moving_average_line', 'lower_bollinger_band'])
+
+data_subset_2 = data_without_na.loc[:, columns_req]
+
+#%% Create buy and sell signals
+
+data_subset_2.loc[:, 'buy_signal'] = np.where((data_subset_2['rsi'] > 0) & (data_subset_2['rsi'] <= 40) &
+                                              (data_subset_2['close'] < data_subset_2['lower_bollinger_band']),
+                                              1, 0)
+
+data_subset_2.loc[:, 'sell_signal'] = np.where((data_subset_2['rsi'] >= 60) & (data_subset_2['rsi'] < 100) &
+                                               (data_subset_2['close'] > data_subset_2['upper_bollinger_band']),
+                                               1, 0)
+
+#%% Filter out points where to buy and sell
+
+buy_sell_data_2 = data_subset_2.loc[(data_subset_2['buy_signal'] == 1) | (data_subset_2['sell_signal'] == 1), :]
+
+buy_sell_data_2[:]['position'] = np.where(buy_sell_data_2['buy_signal'] == 1, 'buy', 'sell')
+
+temp_2 = buy_sell_data_2.groupby((buy_sell_data_2['position'] != buy_sell_data_2['position'].shift()).cumsum()).apply(lambda x: (x.index[0], x.index[-1]))
+
+for tup in temp_2:
+    if len(buy_sell_data_2.loc[tup[0]:tup[1], :]) > 1:
+        if buy_sell_data_2.loc[tup[0], 'position'] == 'buy':
+            min_value = pd.to_datetime(buy_sell_data_2.loc[tup[0]:tup[1], 'close'].idxmin())
+            buy_sell_data_2.loc[tup[0]:tup[1], 'position'] = buy_sell_data_2.loc[tup[0]:tup[1], 'position'].where(
+                buy_sell_data_2.loc[tup[0]:tup[1], 'position'].index == min_value, 'nothing')
+
+        elif buy_sell_data_2.loc[tup[0], 'position'] == 'sell':
+            max_value = pd.to_datetime(buy_sell_data_2.loc[tup[0]:tup[1], 'close'].idxmax())
+            buy_sell_data_2.loc[tup[0]:tup[1], 'position'] = buy_sell_data_2.loc[tup[0]:tup[1], 'position'].where(
+                buy_sell_data_2.loc[tup[0]:tup[1], 'position'].index == max_value, 'nothing')
+
+
+#%% Visualize the data with bollinger bands and rsi
+
+buy_signals_2 = buy_sell_data_2.loc[buy_sell_data_2['position'] == 'buy', 'close']
+sell_signals_2 = buy_sell_data_2.loc[buy_sell_data_2['position'] == 'sell', 'close']
+
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
+                               gridspec_kw={'height_ratios': [3, 1]})
+
+ax1.plot(data_subset_2.close, color='palevioletred', label='Close price', linewidth=1)
+ax1.plot(data_subset_2.upper_bollinger_band, color='lightseagreen', label='upper BB', linewidth=1)
+ax1.plot(data_subset_2.moving_average_line, color='royalblue', label='MA', linewidth=1)
+ax1.plot(data_subset_2.lower_bollinger_band, color='darkorange', label='lower BB', linewidth=1)
+ax1.set_xlim([data_subset_2.index[0], data_subset_2.index[-1]])
+ax1.legend()
+
+ax1.plot(buy_signals_2.index,
+         buy_signals_2,
+         '^', markersize=8, color='green', label='buy')
+ax1.plot(sell_signals_2.index,
+         sell_signals_2,
+         'v', markersize=8, color='red', label='sell')
+ax1.set_title("Bollinger bands with RSI strategy", fontsize=15)
+
+ax2.plot(data_subset_2.rsi, color='darkolivegreen', linewidth=0.8)
+ax2.axhline(y=30, color='slategrey', linestyle='-')
+ax2.axhline(y=80, color='slategrey', linestyle='-')
+ax2.set_ylim([0, 100])
+
+plt.xlabel('Date')
+plt.tight_layout()
+plt.show()
+
