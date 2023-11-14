@@ -34,11 +34,6 @@ axis_df = data_preparation(data)
 
 def stochastic_rsi_with_ema(df, close_price):
 
-    # # MACD - Moving Average Convergence Divergence
-    # macd_signal = calculate_macd(close_price, 12, 26, 9)
-    # df['macd_line'] = macd_signal[0]
-    # df['signal_line'] = macd_signal[1]
-
     # stochastic_rsi
     df['stoch_rsi'] = calculate_stochastic_rsi(close_price, 13)
 
@@ -244,4 +239,89 @@ ax2.set_ylim([0, 100])
 plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
+
+#%% Function to add technical indicators for strategy 3
+
+"""
+The MACD line, which is the blue line, in most cases, is usually a 12-day moving average, 
+and the signal line, which is the orange line, is usually a 26-day moving average. So, an easy way to figure out if the market is in an uptrend, you simply 
+just need to add a 200-day moving average. If we put all this together, we buy if the MACD lines cross below 
+the zero line mark, and the current price is also above the 200-day moving average. So as an example, 
+we would enter a long trade right here because the MACD lines are crossing upward below the zero line, 
+and the current price is above the 200-day moving average. So what you would do is make sure the price 
+is above the 200-day moving average.
+"""
+
+def macd_with_ema(df, close_price):
+
+    # MACD - Moving Average Convergence Divergence
+    macd_signal = calculate_macd(close_price, 12, 26, 9)
+    df['macd_line'] = macd_signal[0]
+    df['signal_line'] = macd_signal[1]
+    df['histogram'] = macd_signal[2]
+
+    # 200-day Exponential moving average
+    df['ema_200'] = calculate_ema(close_price, 200)
+
+#%% call the function to get the technical indicators
+
+macd_with_ema(axis_df, axis_df['close'])
+
+#%% Filter out the required columns for this strategy
+
+columns_req = ['close', 'ema_200', 'macd_line', 'signal_line', 'histogram']
+
+data_without_na = axis_df.dropna(subset=['ema_200', 'macd_line', 'signal_line', 'histogram'])
+
+data_subset_3 = data_without_na.loc[:, columns_req]
+
+#%% Create the buy and sell signals
+
+data_subset_3.loc[:, 'diff'] = data_subset_3['macd_line'] - data_subset_3['signal_line']
+
+data_subset_3.loc[:, 'buy_signal'] = np.where((data_subset_3['macd_line'] < 0) &
+                                              (data_subset_3['macd_line'] > data_subset_3['signal_line']),
+                                              1, 0)
+
+data_subset_3.loc[:, 'sell_signal'] = np.where((data_subset_3['macd_line'] > 0) &
+                                               (data_subset_3['macd_line'] < data_subset_3['signal_line']),
+                                               1, 0)
+
+#%% Visualize the data with bollinger bands and rsi
+
+# buy_signals_2 = buy_sell_data_2.loc[buy_sell_data_2['position'] == 'buy', 'close']
+# sell_signals_2 = buy_sell_data_2.loc[buy_sell_data_2['position'] == 'sell', 'close']
+
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
+                               gridspec_kw={'height_ratios': [3, 1]})
+
+ax1.plot(data_subset_3.close, color='palevioletred', label='Close price', linewidth=1.3)
+ax1.plot(data_subset_3.ema_200, color='royalblue', label='200-day EMA', linewidth=1.3)
+ax1.set_xlim([data_subset_3.index[0], data_subset_3.index[2000]])
+ax1.legend()
+
+# ax1.plot(buy_signals_2.index,
+#          buy_signals_2,
+#          '^', markersize=8, color='green', label='buy')
+# ax1.plot(sell_signals_2.index,
+#          sell_signals_2,
+#          'v', markersize=8, color='red', label='sell')
+ax1.set_title("Moving Average Convergence Divergence with 200-day EMA strategy", fontsize=15)
+
+ax2.plot(data_subset_3.macd_line, color='dodgerblue', linewidth=0.8)
+ax2.plot(data_subset_3.signal_line, color='deeppink', linewidth=0.8)
+ax2.axhline(y=0, color='slategrey', linestyle='-')
+
+for i in range(len(data_subset_3['close'])):
+    if data_subset_3['histogram'][i] < 0:
+        ax2.bar(data_subset_3.index[i], data_subset_3['histogram'][i], color='red')
+    else:
+        ax2.bar(data_subset_3.index[i], data_subset_3['histogram'][i], color='green')
+ax2.set_ylim([-100, 100])
+
+
+plt.xlabel('Date')
+plt.tight_layout()
+plt.show()
+
 

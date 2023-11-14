@@ -41,7 +41,9 @@ def calculate_macd(price_col, slow_period, fast_period, signal_period):
 
     signal = calculate_ema(macd, signal_period)
 
-    return macd, signal
+    hist = macd - signal
+
+    return macd, signal, hist
 
 def calculate_bollinger_bands(price_col, ma_period, std_value):
     ma_line = calculate_sma(price_col, ma_period)
