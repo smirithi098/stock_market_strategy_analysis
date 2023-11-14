@@ -37,9 +37,9 @@ def calculate_macd(price_col, slow_period, fast_period, signal_period):
     ema_12 = calculate_ema(price_col, slow_period)
     ema_26 = calculate_ema(price_col, fast_period)
 
-    macd = ema_26 - ema_12
+    macd = ema_12 - ema_26
 
-    signal = calculate_ema(price_col, signal_period)
+    signal = calculate_ema(macd, signal_period)
 
     return macd, signal
 
