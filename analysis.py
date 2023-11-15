@@ -291,41 +291,70 @@ temp_3 = buy_sell_data_3.groupby((buy_sell_data_3['position'] != buy_sell_data_3
     lambda x: (x.index[0], x.index[-1]))
 
 for tup in temp_3:
+    print(tup[0], tup[1])
     if len(buy_sell_data_3.loc[tup[0]:tup[1], :]) > 1:
+        print("length is greater than 1")
         if buy_sell_data_3.loc[tup[0]:tup[1], 'buy_signal'].apply(lambda x: True if x == 1 else False).all():
+            print("buy signals")
             if buy_sell_data_3.loc[tup[0]:tup[1], :].apply(lambda x: True if x.close > x.ema_200 else False, axis=1).all():
+                print("all points have greater close price than ema")
                 min_value = pd.to_datetime(buy_sell_data_3.loc[tup[0]:tup[1], 'close'].idxmin())
                 buy_sell_data_3.loc[tup[0]:tup[1], 'position'] = np.where(
                     buy_sell_data_3.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
             else:
+                print("ema is greater")
                 buy_sell_data_3.loc[tup[0]:tup[1], 'position'] = 'nothing'
 
         elif buy_sell_data_3.loc[tup[0]:tup[1], 'sell_signal'].apply(lambda x: True if x == 1 else False).all():
+            print("sell signals")
             if buy_sell_data_3.loc[tup[0]:tup[1], :].apply(lambda x: True if x.close < x.ema_200 else False, axis=1).all():
+                print("all points have lesser close price than ema")
                 max_value = pd.to_datetime(buy_sell_data_3.loc[tup[0]:tup[1], 'close'].idxmax())
                 buy_sell_data_3.loc[tup[0]:tup[1], 'position'] = np.where(
                     buy_sell_data_3.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
+            else:
+                print("close price is greater")
+                buy_sell_data_3.loc[tup[0]:tup[1], 'position'] = 'nothing'
 
 
-# %% Visualize the data with bollinger bands and rsi
+#%% Filter out only the buy-sell points
 
-# buy_signals_2 = buy_sell_data_2.loc[buy_sell_data_2['position'] == 'buy', 'close']
-# sell_signals_2 = buy_sell_data_2.loc[buy_sell_data_2['position'] == 'sell', 'close']
+buy_sell_points = buy_sell_data_3[(buy_sell_data_3['position'] != 'nothing')]
+
+indices = buy_sell_points.groupby((buy_sell_points['position'] != buy_sell_points['position'].shift()).cumsum()).apply(
+    lambda x: (x.index[0], x.index[-1]))
+
+for tup in indices:
+    if len(buy_sell_points.loc[tup[0]:tup[1], :]) > 1:
+        if buy_sell_points.loc[tup[0], 'position'] == 'buy':
+            min_value = pd.to_datetime(buy_sell_points.loc[tup[0]:tup[1], 'close'].idxmin())
+            buy_sell_points.loc[tup[0]:tup[1], 'position'] = buy_sell_points.loc[tup[0]:tup[1], 'position'].where(
+                buy_sell_points.loc[tup[0]:tup[1], 'position'].index == min_value, 'nothing')
+
+        elif buy_sell_points.loc[tup[0], 'position'] == 'sell':
+            max_value = pd.to_datetime(buy_sell_points.loc[tup[0]:tup[1], 'close'].idxmax())
+            buy_sell_points.loc[tup[0]:tup[1], 'position'] = buy_sell_points.loc[tup[0]:tup[1], 'position'].where(
+                buy_sell_points.loc[tup[0]:tup[1], 'position'].index == max_value, 'nothing')
+
+# %% Visualize the data with MACD and 200-day EMA
+
+buy_signals_3 = buy_sell_points.loc[buy_sell_points['position'] == 'buy', 'close']
+sell_signals_3 = buy_sell_points.loc[buy_sell_points['position'] == 'sell', 'close']
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(20, 10), sharex=True,
                                gridspec_kw={'height_ratios': [3, 1]})
 
-ax1.plot(data_subset_3.close, color='palevioletred', label='Close price', linewidth=1.3)
+ax1.plot(data_subset_3.close, color='khaki', label='Close price', linewidth=1.3)
 ax1.plot(data_subset_3.ema_200, color='royalblue', label='200-day EMA', linewidth=1.3)
-ax1.set_xlim([data_subset_3.index[0], data_subset_3.index[2000]])
-ax1.legend()
+ax1.set_xlim([data_subset_3.index[0], data_subset_3.index[-1]])
 
-# ax1.plot(buy_signals_2.index,
-#          buy_signals_2,
-#          '^', markersize=8, color='green', label='buy')
-# ax1.plot(sell_signals_2.index,
-#          sell_signals_2,
-#          'v', markersize=8, color='red', label='sell')
+ax1.plot(buy_signals_3.index,
+         buy_signals_3,
+         '^', markersize=8, color='green', label='buy')
+ax1.plot(sell_signals_3.index,
+         sell_signals_3,
+         'v', markersize=8, color='red', label='sell')
+ax1.legend()
 ax1.set_title("Moving Average Convergence Divergence with 200-day EMA strategy", fontsize=15)
 
 ax2.plot(data_subset_3.macd_line, color='dodgerblue', linewidth=0.8)
