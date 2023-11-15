@@ -51,13 +51,6 @@ stochastic_rsi_with_ema(axis_df, axis_df['close'])
 start_index = axis_df.index.get_loc('2006-05-01')
 end_index = axis_df.index.get_loc('2023-05-31')
 all_data = axis_df.loc[axis_df.index[start_index]:axis_df.index[end_index], :]
-"""
-So go to the indicator settings and change the length from 9 to 50. 
-And here, the stochastic RSI crossed the 80 level to the downside, indicating a sell signal, 
-and the price is also closed below the 50 EMA. Both EMAs are sloped downwards, 
-and the price is also closed below the 50 EMA. Here, the stochastic RSI crossed the 20 level to the upside,
- indicating a buy signal, and the 50 EMA is above the 100 EMA, and the price is also closed above the 50 EMA.
-"""
 
 # %% calculate the buy-sell points in the data
 
@@ -91,8 +84,7 @@ for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
     if val < 0:
         if (not -10 < val < 10) & (
                 val == crossover_points.loc[crossover_points.index[i - 1]:crossover_points.index[i + 2], 'diff'].min()) \
-                & (crossover_points.loc[crossover_points.index[i], 'ema_diff'] < crossover_points.loc[
-            crossover_points.index[i + 1], 'ema_diff']):
+                & (crossover_points.loc[crossover_points.index[i], 'ema_diff'] < crossover_points.loc[crossover_points.index[i + 1], 'ema_diff']):
             crossover_points.loc[crossover_points.index[i], 'position'] = 'buy'
         else:
             crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
@@ -100,8 +92,7 @@ for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
     else:
         if (not -10 < val < 10) & (
                 val == crossover_points.loc[crossover_points.index[i - 1]:crossover_points.index[i + 2], 'diff'].max()) \
-                & (crossover_points.loc[crossover_points.index[i - 1], 'ema_diff'] > crossover_points.loc[
-            crossover_points.index[i], 'ema_diff']):
+                & (crossover_points.loc[crossover_points.index[i - 1], 'ema_diff'] > crossover_points.loc[crossover_points.index[i], 'ema_diff']):
             crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
         else:
             crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
@@ -117,13 +108,13 @@ for tup in temp:
     if len(buy_sell_data.loc[tup[0]:tup[1], :]) > 1:
         if buy_sell_data.loc[tup[0], 'position'] == 'buy':
             min_value = pd.to_datetime(buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmin())
-            buy_sell_data.loc[tup[0]:tup[1], 'position'] = buy_sell_data.loc[tup[0]:tup[1], 'position'].where(
-                buy_sell_data.loc[tup[0]:tup[1], 'position'].index == min_value, 'nothing')
+            buy_sell_data.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_data.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
 
         elif buy_sell_data.loc[tup[0], 'position'] == 'sell':
             max_value = pd.to_datetime(buy_sell_data.loc[tup[0]:tup[1], 'ema_50'].idxmax())
-            buy_sell_data.loc[tup[0]:tup[1], 'position'] = buy_sell_data.loc[tup[0]:tup[1], 'position'].where(
-                buy_sell_data.loc[tup[0]:tup[1], 'position'].index == max_value, 'nothing')
+            buy_sell_data.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_data.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
 
 # %% visualize the buy sell points with the technical indicators in place
 
@@ -207,13 +198,13 @@ for tup in temp_2:
     if len(buy_sell_data_2.loc[tup[0]:tup[1], :]) > 1:
         if buy_sell_data_2.loc[tup[0], 'position'] == 'buy':
             min_value = pd.to_datetime(buy_sell_data_2.loc[tup[0]:tup[1], 'close'].idxmin())
-            buy_sell_data_2.loc[tup[0]:tup[1], 'position'] = buy_sell_data_2.loc[tup[0]:tup[1], 'position'].where(
-                buy_sell_data_2.loc[tup[0]:tup[1], 'position'].index == min_value, 'nothing')
+            buy_sell_data_2.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_data_2.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
 
         elif buy_sell_data_2.loc[tup[0], 'position'] == 'sell':
             max_value = pd.to_datetime(buy_sell_data_2.loc[tup[0]:tup[1], 'close'].idxmax())
-            buy_sell_data_2.loc[tup[0]:tup[1], 'position'] = buy_sell_data_2.loc[tup[0]:tup[1], 'position'].where(
-                buy_sell_data_2.loc[tup[0]:tup[1], 'position'].index == max_value, 'nothing')
+            buy_sell_data_2.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_data_2.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
 
 # %% Visualize the data with bollinger bands and rsi
 
@@ -259,11 +250,11 @@ def macd_with_ema(df, close_price):
     df['ema_200'] = calculate_ema(close_price, 200)
 
 
-# %% call the function to get the technical indicators
+#%% call the function to get the technical indicators
 
 macd_with_ema(axis_df, axis_df['close'])
 
-# %% Filter out the required columns for this strategy
+#%% Filter out the required columns for this strategy
 
 columns_req = ['close', 'ema_200', 'macd_line', 'signal_line', 'histogram']
 
@@ -328,13 +319,13 @@ for tup in indices:
     if len(buy_sell_points.loc[tup[0]:tup[1], :]) > 1:
         if buy_sell_points.loc[tup[0], 'position'] == 'buy':
             min_value = pd.to_datetime(buy_sell_points.loc[tup[0]:tup[1], 'close'].idxmin())
-            buy_sell_points.loc[tup[0]:tup[1], 'position'] = buy_sell_points.loc[tup[0]:tup[1], 'position'].where(
-                buy_sell_points.loc[tup[0]:tup[1], 'position'].index == min_value, 'nothing')
+            buy_sell_points.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_points.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
 
         elif buy_sell_points.loc[tup[0], 'position'] == 'sell':
             max_value = pd.to_datetime(buy_sell_points.loc[tup[0]:tup[1], 'close'].idxmax())
-            buy_sell_points.loc[tup[0]:tup[1], 'position'] = buy_sell_points.loc[tup[0]:tup[1], 'position'].where(
-                buy_sell_points.loc[tup[0]:tup[1], 'position'].index == max_value, 'nothing')
+            buy_sell_points.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_points.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
 
 # %% Visualize the data with MACD and 200-day EMA
 
@@ -367,6 +358,99 @@ for i in range(len(data_subset_3['close'])):
     else:
         ax2.bar(data_subset_3.index[i], data_subset_3['histogram'][i], color='green')
 ax2.set_ylim([-100, 100])
+
+plt.xlabel('Date')
+plt.tight_layout()
+plt.show()
+
+#%% Function to add technical indicators for strategy 4
+
+def macd_with_rsi(df, close_price):
+
+    # MACD - Moving Average Convergence Divergence
+    macd_signal = calculate_macd(close_price, 12, 26, 9)
+    df['macd_line'] = macd_signal[0]
+    df['signal_line'] = macd_signal[1]
+
+    # RSI - Relative strength index
+    df['rsi'] = calculate_rsi(close_price, 14)
+
+#%% Call the function to get the required indicators' calculations
+
+macd_with_rsi(axis_df, axis_df['close'])
+
+#%% Filter out the required columns for this strategy
+
+columns_req = ['close', 'macd_line', 'signal_line', 'rsi']
+
+data_without_na = axis_df.dropna(subset=['macd_line', 'signal_line', 'rsi'])
+
+data_subset_4 = data_without_na.loc[:, columns_req]
+
+#%% Identify buy-sell points
+
+data_subset_4.loc[:, 'buy_signal'] = np.where((data_subset_4['rsi'] > 0) & (data_subset_4['rsi'] <= 40) &
+                                              (data_subset_4['macd_line'] < 0) &
+                                              (data_subset_4['macd_line'] > data_subset_4['signal_line']),
+                                              1, 0)
+
+data_subset_4.loc[:, 'sell_signal'] = np.where((data_subset_4['rsi'] >= 60) & (data_subset_4['rsi'] < 100) &
+                                               (data_subset_4['macd_line'] > 0) &
+                                               (data_subset_4['macd_line'] < data_subset_4['signal_line']),
+                                               1, 0)
+
+#%% Create buy-sell positions
+
+buy_sell_data_4 = data_subset_4.loc[(data_subset_4['buy_signal'] == 1) | (data_subset_4['sell_signal'] == 1), :]
+buy_sell_data_4.loc[:, 'position'] = np.where(buy_sell_data_4['buy_signal'] == 1, 'buy', 'sell')
+
+#%% Identify single buy-sell points among consecutive points
+
+temp_4 = buy_sell_data_4.groupby((buy_sell_data_4['position'] != buy_sell_data_4['position'].shift()).cumsum()).apply(
+    lambda x: (x.index[0], x.index[-1]))
+
+for tup in temp_4:
+    if len(buy_sell_data_4.loc[tup[0]:tup[1], :]) > 1:
+        if buy_sell_data_4.loc[tup[0], 'position'] == 'buy':
+            min_value = pd.to_datetime(buy_sell_data_4.loc[tup[0]:tup[1], 'close'].idxmin())
+            buy_sell_data_4.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_data_4.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
+
+        elif buy_sell_data_4.loc[tup[0], 'position'] == 'sell':
+            max_value = pd.to_datetime(buy_sell_data_4.loc[tup[0]:tup[1], 'close'].idxmax())
+            buy_sell_data_4.loc[tup[0]:tup[1], 'position'] = np.where(
+                buy_sell_data_4.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
+
+
+#%% Visualize the price with indicators (macd & rsi)
+
+buy_signals_4 = buy_sell_data_4.loc[buy_sell_data_4['position'] == 'buy', 'close']
+sell_signals_4 = buy_sell_data_4.loc[buy_sell_data_4['position'] == 'sell', 'close']
+
+fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, figsize=(20, 10), sharex=True,
+                                    gridspec_kw={'height_ratios': [3, 1, 1]})
+
+ax1.plot(data_subset_4.close, color='darkgoldenrod', label='Close price', linewidth=1.3)
+ax1.set_xlim([data_subset_4.index[0], data_subset_4.index[1500]])
+
+ax1.plot(buy_signals_4.index,
+         buy_signals_4,
+         '^', markersize=8, color='green', label='buy')
+ax1.plot(sell_signals_4.index,
+         sell_signals_4,
+         'v', markersize=8, color='red', label='sell')
+ax1.legend()
+ax1.set_title("Moving Average Convergence Divergence with RSI strategy", fontsize=15)
+
+ax2.plot(data_subset_4.macd_line, color='dodgerblue', linewidth=0.8)
+ax2.plot(data_subset_4.signal_line, color='deeppink', linewidth=0.8)
+ax2.axhline(y=0, color='slategrey', linestyle='-')
+ax2.set_ylim([-100, 100])
+
+ax3.plot(data_subset_4.rsi, color='darkolivegreen', linewidth=0.8)
+ax3.axhline(y=30, color='slategrey', linestyle='-')
+ax3.axhline(y=70, color='slategrey', linestyle='-')
+ax3.set_ylim([0, 100])
 
 plt.xlabel('Date')
 plt.tight_layout()
