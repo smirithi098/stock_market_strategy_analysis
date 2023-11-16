@@ -1,12 +1,12 @@
 # %% import libraries
-
+import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date, timedelta
 from stock_market_strategy_analysis.indicators import calculate_rsi, \
-    calculate_macd, calculate_bollinger_bands, calculate_stochastic_rsi, calculate_ema, calculate_sma
+    calculate_macd, calculate_bollinger_bands, calculate_ema, calculate_sma
 
 # %%  Function - Drop columns, Update column names & Update frequency of index
 def data_preparation(df):
@@ -33,9 +33,7 @@ axis_df = data_preparation(data)
 
 # %% function to add technical indicators to df for strategy 1
 
-def stochastic_rsi_with_ema(df, close_price):
-    # stochastic_rsi
-    df['stoch_rsi'] = calculate_stochastic_rsi(close_price, 13)
+def ema_crossover(df, close_price):
 
     # EMA - Exponential Moving Average
     df['ema_50'] = calculate_ema(close_price, 50)
@@ -44,39 +42,30 @@ def stochastic_rsi_with_ema(df, close_price):
 
 # %% call the function to get the technical indicators
 
-stochastic_rsi_with_ema(axis_df, axis_df['close'])
+ema_crossover(axis_df, axis_df['close'])
 
 # %% Filter out rows with value not null
 
-start_index = axis_df.index.get_loc('2006-05-01')
-end_index = axis_df.index.get_loc('2023-05-31')
-all_data = axis_df.loc[axis_df.index[start_index]:axis_df.index[end_index], :]
+columns_req = ['close', 'ema_50', 'ema_100']
 
-# %% calculate the buy-sell points in the data
+data_without_na = axis_df.dropna(subset=['ema_50', 'ema_100'])
 
-all_data[:]['ema_diff'] = all_data['ema_50'] - all_data['ema_100']
-# all_data.loc[:, 'ema_diff'] = all_data['ema_50'] - all_data['ema_100']
-all_data[:]['buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
-                                     (all_data['ema_50'] > all_data['ema_100']),
-                                     1, 0)
-# all_data.loc[:, 'buy_signal'] = np.where((all_data['stoch_rsi'] > 0) & (all_data['stoch_rsi'] <= 42) &
-#                                          (all_data['ema_50'] > all_data['ema_100']),
-#                                          1, 0)
-all_data[:]['sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
-                                      (all_data['ema_50'] < all_data['ema_100']),
-                                      1, 0)
-# all_data.loc[:, 'sell_signal'] = np.where((all_data['stoch_rsi'] >= 68) & (all_data['stoch_rsi'] < 100) &
-#                                           (all_data['ema_50'] < all_data['ema_100']),
-#                                           1, 0)
+data_subset_1 = data_without_na.loc[:, columns_req]
 
-# %%
+#%% identify all possible buy-sell points
 
-crossover_points = pd.DataFrame(all_data.loc[all_data['ema_diff'].between(-1, 1), ['ema_50', 'ema_diff']])
+data_subset_1.loc[:, 'ema_diff'] = data_subset_1['ema_50'] - data_subset_1['ema_100']
+data_subset_1.loc[:, 'buy_signal'] = np.where((data_subset_1['ema_50'] > data_subset_1['ema_100']), 1, 0)
+data_subset_1.loc[:, 'sell_signal'] = np.where((data_subset_1['ema_50'] < data_subset_1['ema_100']), 1, 0)
+
+#%% Create additional identification columns
+
+crossover_points = pd.DataFrame(data_subset_1.loc[data_subset_1['ema_diff'].between(-1, 1), ['close', 'ema_50', 'ema_diff']])
 crossover_points['diff'] = crossover_points['ema_50'].diff()
 
 crossover_points = crossover_points.dropna(axis=0)
 
-# %%
+#%% Identify points where to buy, sell and hold position
 
 for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
     print(i, val)
@@ -97,7 +86,8 @@ for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-1]):
         else:
             crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
 
-# %%
+# %% Filter out the best suitable buy-sell points for maximum returns
+
 buy_sell_data = crossover_points[(crossover_points['position'] != 'nothing')]
 buy_sell_data = buy_sell_data.loc[:buy_sell_data.index[-3], :]
 
@@ -146,6 +136,37 @@ ax2.set_ylim([0, 100])
 plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
+
+#%% Define a function to calculate return percentage
+
+buy_sell_data = buy_sell_data[buy_sell_data.position != 'nothing']
+capital_to_invest = 1000000
+
+# buy_indices = buy_signals.index.to_list()
+# sell_indices = sell_signals.index.to_list()
+
+for idx in buy_sell_data.index:
+    idx_position = buy_sell_data.index.get_loc(idx)
+
+    if buy_sell_data.loc[idx, 'position'] == 'buy':
+        if idx_position == 0:
+            buy_sell_data.loc[idx, 'capital'] = capital_to_invest
+            buy_sell_data.loc[idx, 'holdings'] = math.floor(buy_sell_data.loc[idx, 'capital'] /
+                                                            buy_sell_data.loc[idx, 'close'])
+            buy_sell_data.loc[idx, 'returns'] = buy_sell_data.loc[idx, 'holdings'] * \
+                                                     buy_sell_data.loc[idx, 'close']
+        else:
+            buy_sell_data.loc[idx, 'capital'] = buy_sell_data.loc[buy_sell_data.index[idx_position - 1], 'capital']
+            buy_sell_data.loc[idx, 'holdings'] = math.floor(buy_sell_data.loc[idx, 'capital'] /
+                                                            buy_sell_data.loc[idx, 'close'])
+            buy_sell_data.loc[idx, 'returns'] = buy_sell_data.loc[idx, 'holdings'] * \
+                                                     buy_sell_data.loc[idx, 'close']
+
+    else:
+        close_diff = buy_sell_data.loc[idx, 'close'] - buy_sell_data.loc[buy_sell_data.index[idx_position - 1], 'close']
+        buy_sell_data.loc[idx, 'returns'] = buy_sell_data.loc[buy_sell_data.index[idx_position - 1], 'holdings'] * \
+                                            close_diff
+        buy_sell_data.loc[idx, 'capital'] = buy_sell_data.loc[idx, 'returns']
 
 
 # %% function to add technical indicators for Strategy 2
