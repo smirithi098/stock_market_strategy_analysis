@@ -140,15 +140,13 @@ plt.show()
 #%% Define a function to calculate return percentage
 
 buy_sell_data = buy_sell_data[buy_sell_data.position != 'nothing']
-capital_to_invest = 1000000
-
-# buy_indices = buy_signals.index.to_list()
-# sell_indices = sell_signals.index.to_list()
+buy_sell_data.position = buy_sell_data.position.map({'buy': 1, 'sell': 0})
+capital_to_invest = 100000
 
 for idx in buy_sell_data.index:
     idx_position = buy_sell_data.index.get_loc(idx)
 
-    if buy_sell_data.loc[idx, 'position'] == 'buy':
+    if buy_sell_data.loc[idx, 'position'] == 1:
         if idx_position == 0:
             buy_sell_data.loc[idx, 'capital'] = capital_to_invest
             buy_sell_data.loc[idx, 'holdings'] = math.floor(buy_sell_data.loc[idx, 'capital'] /
@@ -164,10 +162,11 @@ for idx in buy_sell_data.index:
 
     else:
         close_diff = buy_sell_data.loc[idx, 'close'] - buy_sell_data.loc[buy_sell_data.index[idx_position - 1], 'close']
-        buy_sell_data.loc[idx, 'returns'] = buy_sell_data.loc[buy_sell_data.index[idx_position - 1], 'holdings'] * \
-                                            close_diff
+        buy_sell_data.loc[idx, 'holdings'] = buy_sell_data.loc[buy_sell_data.index[idx_position - 1], 'holdings']
+        buy_sell_data.loc[idx, 'returns'] = buy_sell_data.loc[idx, 'holdings'] * buy_sell_data.loc[idx, 'close']
         buy_sell_data.loc[idx, 'capital'] = buy_sell_data.loc[idx, 'returns']
 
+# buy_sell_data = buy_sell_data.drop(['capital'], axis=1)
 
 # %% function to add technical indicators for Strategy 2
 
