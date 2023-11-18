@@ -54,18 +54,4 @@ def calculate_bollinger_bands(price_col, ma_period, std_value):
 
     return upper_band, lower_band
 
-# def calculate_stochastic_rsi(price_col, period):
-#     # take the first difference of the price column
-#     price_delta = price_col.diff()
-#
-#     # Split the series into two: lower close prices & higher close prices
-#     gain = pd.Series(price_delta.apply(lambda x: x if x > 0 else 0))
-#     loss = pd.Series(price_delta.apply(lambda x: -x if x < 0 else 0))
-#
-#     period_high = gain.rolling(period).max()
-#     period_low = loss.rolling(period).min()
-#
-#     stoch_rsi = (price_col - period_low) / (period_high - period_low)
-#
-#     return stoch_rsi
 
