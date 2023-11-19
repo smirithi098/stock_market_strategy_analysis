@@ -5,6 +5,10 @@ import numpy as np
 from stock_market_strategy_analysis.indicators import calculate_rsi, \
     calculate_macd, calculate_bollinger_bands, calculate_ema, calculate_sma
 
+import plotly.io as pio
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 # Function to clean and prepare the initial data loaded from csv file
 def prepare_data(df):
     df = df.drop(['series ', '52W H ', '52W L ', 'VALUE ', 'No of trades '],
@@ -18,6 +22,65 @@ def prepare_data(df):
     df = df.interpolate('linear')
 
     return df
+
+# Function to plot the OHLC - Volume data for the original stock price
+def plot_graph(df, symbol):
+    pio.renderers.default = 'browser'
+
+    plot = make_subplots(specs=[[{"secondary_y": True}]])
+
+    plot.add_trace(
+        go.Candlestick(
+            x=df.index,
+            open=df['open'],
+            high=df['high'],
+            low=df['low'],
+            close=df['close'],
+            name='Candlestick Graph'
+        ),
+        row=1,
+        col=1,
+        secondary_y=True,
+    )
+
+    plot.add_trace(
+        go.Bar(
+            x=df.index,
+            y=df['volume'],
+            name='Volume',
+            showlegend=False,
+            marker={
+                "color": "lightgrey",
+            }
+        ),
+        secondary_y=False,
+    )
+
+    for yr in range(df.index[0].year, df.index[-1].year):
+        plot.add_vline(x=pd.to_datetime(str(yr) + '-01-01'), line_color='black', line_dash="dash", opacity=0.3)
+
+    plot.update_layout(
+        title={
+            "text": f"{symbol} Historical Price Data",
+            "x": 0.5,
+            "y": 0.95
+        },
+        xaxis_title="Date",
+        yaxis_title="Price"
+    )
+
+    plot.update_xaxes(
+        rangeslider_visible=False,
+    )
+
+    plot.update_layout(
+        {
+            "paper_bgcolor": "rgba(0, 0, 0, 0)",
+            "plot_bgcolor": "rgba(0, 0, 0, 0)",
+        }
+    )
+
+    plot.show()
 
 # Function to get indicators for strategy 1 - 50 & 100-day EMA crossover
 def ema_crossover(df, close_price):
@@ -93,6 +156,33 @@ def macd_with_rsi(df, close_price):
 
     return df
 
+# Function to identify points based on condition
+def identify_signals(df):
+    df.loc[:, 'ema_diff'] = df['ema_50'] - df['ema_100']
+
+    crossover_points = pd.DataFrame(df.loc[df['ema_diff'].between(-1, 1),
+                                    ['close', 'ema_50', 'ema_100', 'ema_diff']])
+    crossover_points['diff'] = crossover_points['ema_50'].diff()
+
+    crossover_points = crossover_points.dropna(axis=0)
+
+    for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-2]):
+        if val < 0:
+            if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i - 1]:crossover_points.index[i + 2], 'diff'].min()) \
+                    & (crossover_points.loc[crossover_points.index[i], 'ema_diff'] < crossover_points.loc[crossover_points.index[i + 1], 'ema_diff']):
+                crossover_points.loc[crossover_points.index[i], 'position'] = 'buy'
+            else:
+                crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
+
+        else:
+            if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i - 1]:crossover_points.index[i + 2], 'diff'].max()) \
+                    & (crossover_points.loc[crossover_points.index[i - 1], 'ema_diff'] > crossover_points.loc[crossover_points.index[i], 'ema_diff']):
+                crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
+            else:
+                crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
+
+    return crossover_points
+
 # Function to create buy-sell signals wrt conditions for strategy 1
 def get_signals_for_strategy_1(df):
     buy_sell_points = df[(df['position'] != 'nothing')]
@@ -157,6 +247,8 @@ def filter_buy_sell_points(df):
                         df.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
                 else:
                     df.loc[tup[0]:tup[1], 'position'] = 'nothing'
+
+    df = df[df.position != 'nothing']
 
     return df
 
