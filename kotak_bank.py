@@ -12,20 +12,20 @@ sns.set(style='ticks')
 warnings.filterwarnings('ignore')
 #%% Load and clean the data
 
-data = pd.read_csv("S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/axisbank.csv",
+data = pd.read_csv("S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/kotakbank.csv",
                    index_col=0, parse_dates=[0], dayfirst=True)
 # Step 1
-axis_df = strat.prepare_data(data)
+kotak_df = strat.prepare_data(data)
 
-#%% Visualize the AXIS BANK OHLC prices with volume
+#%% Visualize the KOTAK BANK OHLC prices with volume
 
-strat.plot_graph(axis_df, 'AXIS BANK')
+strat.plot_graph(kotak_df, 'KOTAK BANK')
 
 # ##########################################  STRATEGY - 1  ############################################################
 #%% Get the technical indicators for the strategy 1
 
 # Step 2
-data_subset_1 = strat.ema_crossover(axis_df, axis_df['close'])
+data_subset_1 = strat.ema_crossover(kotak_df, kotak_df['close'])
 
 #%% identify all possible buy-sell points
 
@@ -78,7 +78,7 @@ plt.show()
 #%% Get the technical indicators for the strategy 2
 
 # Step 2
-data_subset_2 = strat.bollinger_bands_with_rsi(axis_df, axis_df['close'])
+data_subset_2 = strat.bollinger_bands_with_rsi(kotak_df, kotak_df['close'])
 
 #%% Get the buy-sell points
 
@@ -134,7 +134,7 @@ plt.show()
 #%% Get the technical indicators for the strategy 3
 
 # Step 2
-data_subset_3 = strat.macd_with_ema(axis_df, axis_df['close'])
+data_subset_3 = strat.macd_with_ema(kotak_df, kotak_df['close'])
 
 #%% Get the buy-sell points
 
@@ -195,7 +195,7 @@ plt.show()
 #%% Get the technical indicators for the strategy 4
 
 # Step 2
-data_subset_4 = strat.macd_with_rsi(axis_df, axis_df['close'])
+data_subset_4 = strat.macd_with_rsi(kotak_df, kotak_df['close'])
 
 #%% Get the buy-sell points
 

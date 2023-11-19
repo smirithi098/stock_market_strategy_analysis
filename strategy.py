@@ -1,4 +1,5 @@
 # import libraries
+import warnings
 import math
 import pandas as pd
 import numpy as np
@@ -8,6 +9,8 @@ from stock_market_strategy_analysis.indicators import calculate_rsi, \
 import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+
+warnings.filterwarnings('ignore')
 
 # Function to clean and prepare the initial data loaded from csv file
 def prepare_data(df):
@@ -295,6 +298,9 @@ def calculate_returns(df):
     capital_to_invest = 100000
     df.position = df.position.map({'buy': 1, 'sell': 0})
 
+    if df.loc[df.index[0], 'position'] == 0:
+        df = df.loc[df.index[1]:, :]
+
     for idx in df.index:
         idx_position = df.index.get_loc(idx)
 
@@ -313,11 +319,13 @@ def calculate_returns(df):
                                                     df.loc[idx, 'close']
 
         else:
-            close_diff = df.loc[idx, 'close'] - df.loc[
-                            df.index[idx_position - 1], 'close']
-            df.loc[idx, 'units_bought_or_sold'] = df.loc[df.index[idx_position - 1], 'units_bought_or_sold']
-            df.loc[idx, 'returns'] = df.loc[idx, 'units_bought_or_sold'] * close_diff
-            df.loc[idx, 'capital'] = df.loc[idx, 'returns'] + df.loc[df.index[idx_position - 1], 'returns']
+            if idx_position == 0:
+                continue
+            else:
+                close_diff = df.loc[idx, 'close'] - df.loc[df.index[idx_position - 1], 'close']
+                df.loc[idx, 'units_bought_or_sold'] = df.loc[df.index[idx_position - 1], 'units_bought_or_sold']
+                df.loc[idx, 'returns'] = df.loc[idx, 'units_bought_or_sold'] * close_diff
+                df.loc[idx, 'capital'] = df.loc[idx, 'returns'] + df.loc[df.index[idx_position - 1], 'returns']
 
     df.loc[:, '% returns'] = df.loc[:, 'returns'].pct_change()
 
