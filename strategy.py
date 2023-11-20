@@ -289,13 +289,12 @@ def identify_buy_sell_points(df):
                 df.loc[tup[0]:tup[1], 'position'] = np.where(
                     df.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
 
-    df = df[df.position != 'nothing']
-
     return df
 
 # Function to calculate the capital and returns at every buy-sell points
 def calculate_returns(df):
     capital_to_invest = 100000
+    df = df[df.position != 'nothing']
     df.position = df.position.map({'buy': 1, 'sell': 0})
 
     if df.loc[df.index[0], 'position'] == 0:

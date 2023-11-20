@@ -63,10 +63,9 @@ ax1.plot(sell_signals.index,
          'v', markersize=8, color='#CD1818', label='sell')
 ax1.legend()
 
-ax1.text(x=0.5, y=1.1, s='50 & 100 day EMA crossover strategy', fontsize=15, weight='bold',
+ax1.text(x=0.5, y=1, s='50 & 100 day EMA crossover strategy', fontsize=15, weight='bold',
          ha='center', va='bottom', transform=ax1.transAxes)
-ax1.text(x=0.5, y=1, s=f'Returns: {round(total_return, 2)}%', fontsize=15, weight='bold',
-         ha='center', va='bottom', transform=ax1.transAxes)
+
 
 plt.xlabel('Date')
 plt.tight_layout()
@@ -113,10 +112,9 @@ ax1.plot(sell_signals_2.index,
          sell_signals_2,
          'v', markersize=8, color='#CD1818', label='sell')
 ax1.legend()
-ax1.text(x=0.5, y=1.1, s='Bollinger bands with RSI strategy', fontsize=15, weight='bold',
+ax1.text(x=0.5, y=1, s='Bollinger bands with RSI strategy', fontsize=15, weight='bold',
          ha='center', va='bottom', transform=ax1.transAxes)
-ax1.text(x=0.5, y=1, s=f'Returns: {round(total_return_2, 2)}%', fontsize=15, weight='bold',
-         ha='center', va='bottom', transform=ax1.transAxes)
+
 ax1.grid()
 
 ax2.plot(data_subset_2.rsi, color='darkolivegreen', linewidth=0.8)
@@ -174,10 +172,9 @@ ax1.plot(sell_signals_3.index,
          sell_signals_3,
          'v', markersize=8, color='#CD1818', label='sell')
 ax1.legend()
-ax1.text(x=0.5, y=1.1, s='Moving Average Convergence Divergence with 200-day EMA strategy', fontsize=15, weight='bold',
+ax1.text(x=0.5, y=1, s='Moving Average Convergence Divergence with 200-day EMA strategy', fontsize=15, weight='bold',
          ha='center', va='bottom', transform=ax1.transAxes)
-ax1.text(x=0.5, y=1, s=f'Returns: {round(total_return_3, 2)}%', fontsize=15, weight='bold',
-         ha='center', va='bottom', transform=ax1.transAxes)
+
 ax1.grid()
 
 ax2.plot(data_subset_3.macd_line, color='dodgerblue', linewidth=0.8)
@@ -228,10 +225,9 @@ ax1.plot(sell_signals_4.index,
          sell_signals_4,
          'v', markersize=8, color='#CD1818', label='sell')
 ax1.legend()
-ax1.text(x=0.5, y=1.1, s='Moving Average Convergence Divergence with RSI strategy', fontsize=15, weight='bold',
+ax1.text(x=0.5, y=1, s='Moving Average Convergence Divergence with RSI strategy', fontsize=15, weight='bold',
          ha='center', va='bottom', transform=ax1.transAxes)
-ax1.text(x=0.5, y=1, s=f'Returns: {round(total_return_4, 2)}%', fontsize=15, weight='bold',
-         ha='center', va='bottom', transform=ax1.transAxes)
+
 ax1.grid()
 
 ax2.plot(data_subset_4.macd_line, color='dodgerblue', linewidth=0.8)
