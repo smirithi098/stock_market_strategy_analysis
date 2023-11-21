@@ -1,10 +1,15 @@
 # import libraries
 import warnings
 import math
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 from stock_market_strategy_analysis.indicators import calculate_rsi, \
     calculate_macd, calculate_bollinger_bands, calculate_ema, calculate_sma
+
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -338,6 +343,60 @@ def get_total_returns(ret_df):
 
     cumulative_returns = ((1 + daily_returns).cumprod() - 1)
 
+    cum_return_percent = cumulative_returns * 100
+
     total = cumulative_returns.loc[cumulative_returns.index[-1]] * 100
 
-    return total
+    return total, cum_return_percent
+
+# Function to merge all data points
+def merge_data(data_subset, position_data):
+    df = pd.concat([data_subset, position_data.loc[:, 'position']], axis=1)
+    df.position = df.position.fillna('nothing')
+    df = df.drop(['buy_signal', 'sell_signal'], axis=1)
+    df.position = df.position.map({'buy': 1, 'sell': -1, 'nothing': 0})
+
+    return df
+
+# Function to remove volatility and make TS stationary
+def normalize_data(price):
+    price_diff = price.diff().dropna()
+    price_std = price_diff.groupby([price_diff.index.year, price_diff.index.month]).std()
+    price_volatility = price_diff.index.map(lambda dt: price_std.loc[(dt.year, dt.month)])
+    price_data = price_diff / price_volatility
+
+    return price_data
+
+
+# Function to implement the ADABoost classification
+
+def adaboost_classification(df):
+    X = df.columns[:-1].to_list()
+    y = [df.columns[-1]]
+
+    start_date = df.index[0].date()
+    end_date = date(2022, 12, 31)
+
+    diff_in_days = (end_date - start_date).days
+    next_date = diff_in_days + 1
+
+    train_start_index = df.index[0]
+    train_end_index = df.index[diff_in_days]
+
+    test_start_index = df.index[next_date]
+
+    X_train = df.loc[train_start_index:train_end_index, X]
+    X_test = df.loc[test_start_index:, X]
+
+    y_train = df.loc[train_start_index:train_end_index, y]
+    y_test = df.loc[test_start_index:, y]
+
+    ab_classifier = AdaBoostClassifier(
+        DecisionTreeClassifier(max_depth=len(df.columns[1:-1])), n_estimators=750
+    )
+
+    ab_classifier.fit(X_train, y_train)
+
+    y_pred = ab_classifier.predict(X_test)
+
+    return y_test, y_pred

@@ -72,6 +72,31 @@ plt.tight_layout()
 plt.grid()
 plt.show()
 
+#%% Get the final data with all points merged with buy-sell-hold position
+
+merged_data = strat.merge_data(data_subset_1, buy_sell_data)
+
+#%% Normalize the columns to have equal scales
+
+for column in merged_data.columns[:-1]:
+    merged_data[column] = strat.normalize_data(merged_data[column])
+
+merged_data = merged_data.dropna()
+
+#%% Call the function to train and test the classifier
+
+y_tuple = strat.adaboost_classification(merged_data)
+y_actual = y_tuple[0]
+y_predicted = y_tuple[1]
+
+# plot the confusion matrix
+
+conf_mat = confusion_matrix(y_actual, y_predicted)
+
+sns.heatmap(conf_mat, annot=True, cmap='Greens')
+plt.title("Confusion Matrix For EMA crossover strategy")
+plt.tight_layout()
+plt.show()
 
 # ##########################################  STRATEGY - 2  ############################################################
 #%% Get the technical indicators for the strategy 2
@@ -126,6 +151,31 @@ plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
 
+#%% Get the final data with all points merged with buy-sell-hold position
+
+merged_data = strat.merge_data(data_subset_2, buy_sell_data_2)
+
+#%% Normalize the columns to have equal scales
+
+for column in merged_data.columns[:-1]:
+    merged_data[column] = strat.normalize_data(merged_data[column])
+
+merged_data = merged_data.dropna()
+
+#%% Call the function to train and test the classifier
+
+y_tuple = strat.adaboost_classification(merged_data)
+y_actual = y_tuple[0]
+y_predicted = y_tuple[1]
+
+# plot the confusion matrix
+
+conf_mat = confusion_matrix(y_actual, y_predicted)
+
+sns.heatmap(conf_mat, annot=True, cmap='Greens')
+plt.title("Confusion Matrix For Bollinger bands with RSI strategy")
+plt.tight_layout()
+plt.show()
 
 # ##########################################  STRATEGY - 3  ############################################################
 
@@ -187,6 +237,33 @@ plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
 
+#%% Get the final data with all points merged with buy-sell-hold position
+
+merged_data = strat.merge_data(data_subset_3, buy_sell_data_3)
+
+#%% Normalize the columns to have equal scales
+
+for column in merged_data.columns[:-1]:
+    merged_data[column] = strat.normalize_data(merged_data[column])
+
+merged_data = merged_data.dropna()
+
+#%% Call the function to train and test the classifier
+
+y_tuple = strat.adaboost_classification(merged_data)
+y_actual = y_tuple[0]
+y_predicted = y_tuple[1]
+
+# plot the confusion matrix
+
+conf_mat = confusion_matrix(y_actual, y_predicted)
+
+sns.heatmap(conf_mat, annot=True, cmap='Greens')
+plt.title("Confusion Matrix For MACD with EMA strategy")
+plt.tight_layout()
+plt.show()
+
+
 # ##########################################  STRATEGY - 4  ############################################################
 
 #%% Get the technical indicators for the strategy 4
@@ -244,3 +321,28 @@ plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
 
+#%% Get the final data with all points merged with buy-sell-hold position
+
+merged_data = strat.merge_data(data_subset_4, buy_sell_data_4)
+
+#%% Normalize the columns to have equal scales
+
+for column in merged_data.columns[:-1]:
+    merged_data[column] = strat.normalize_data(merged_data[column])
+
+merged_data = merged_data.dropna()
+
+#%% Call the function to train and test the classifier
+
+y_tuple = strat.adaboost_classification(merged_data)
+y_actual = y_tuple[0]
+y_predicted = y_tuple[1]
+
+# plot the confusion matrix
+
+conf_mat = confusion_matrix(y_actual, y_predicted)
+
+sns.heatmap(conf_mat, annot=True, cmap='Greens')
+plt.title("Confusion Matrix For MACD with RSI strategy")
+plt.tight_layout()
+plt.show()
