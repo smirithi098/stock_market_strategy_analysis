@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime, date, timedelta
-from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 import strategy as mod
 
 sns.set(style='ticks')
@@ -26,16 +25,6 @@ data_strat_1 = mod.ema_crossover(axis_df, axis_df['close'])
 # %% Identify optimal buy-sell points
 
 buy_sell_data_1 = mod.get_signals_for_strategy_1(data_strat_1.copy(deep=True))
-
-#%% Calculate returns
-
-cum_ret_1, portfolio_amount_1 = mod.calculate_cumulative_returns(buy_sell_data_1)
-
-annual_return_1 = mod.calculate_annual_return(buy_sell_data_1, cumulative_return=cum_ret_1)
-
-print(f"Cumulative Return of strategy 1: {cum_ret_1 * 100:.2f}%")
-print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_1:.2f}")
-print(f"Annual Return of strategy 1: {annual_return_1 * 100:.2f}%")
 
 # %% visualize the buy sell points with the technical indicators in place
 
@@ -66,6 +55,18 @@ plt.tight_layout()
 plt.grid()
 plt.show()
 
+#%% Calculate returns
+
+cum_ret_1, portfolio_amount_1 = mod.calculate_cumulative_returns(buy_sell_data_1)
+
+annual_return_1 = mod.calculate_annual_return(buy_sell_data_1, cumulative_return=cum_ret_1)
+
+return_on_investment_1 = mod.calculate_roi(portfolio_amount_1)
+
+print(f"ROI of strategy 1: {return_on_investment_1:.2f}%")
+print(f"Annual Return of strategy 1: {annual_return_1 * 100:.2f}%")
+print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_1:.2f}")
+
 #%% Visualize the cumulative returns over the investment period
 
 buy_sell_data_1['returns'] = buy_sell_data_1['cumulative_returns'].cumsum()
@@ -74,36 +75,22 @@ fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
 
 # Plot the cumulative returns
 ax1.plot(buy_sell_data_1.index, buy_sell_data_1['returns'], color='darkcyan', label='Cumulative Returns')
-ax1.set_xlabel('Date')
 ax1.set_ylabel('Cumulative Returns')
 ax1.tick_params('y')
+ax1.grid()
+ax1.text(x=0.5, y=1, s='Cumulative returns for the 50 & 100 day EMA crossover strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax1.transAxes)
 
 # Plot the portfolio amount
 ax2.plot(buy_sell_data_1.index, buy_sell_data_1['investment_value'], color='indianred', label='Portfolio Amount')
+ax2.set_xlabel('Date')
 ax2.set_ylabel('Portfolio Amount')
 ax2.tick_params('y')
+ax2.grid()
+ax1.text(x=0.5, y=1, s='Investment amount for the 50 & 100 day EMA crossover strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax2.transAxes)
 
-# Add a legend
-fig.legend(loc='upper right')
-
-# Show the plot
-plt.show()
-
-
-#%% Plot the portfolio value over the investment period
-
-sns.lineplot(data=buy_sell_data_1, x=buy_sell_data_1.index, y='investment_value', color='blue')
-
-# Set the x-axis label
-plt.xlabel('Date')
-
-# Set the y-axis label
-plt.ylabel('Portfolio Amount')
-
-# Set the title of the plot
-plt.title('Investment Value Over Time')
-
-# Display the plot
+plt.tight_layout()
 plt.show()
 
 #%% STRATEGY 2
