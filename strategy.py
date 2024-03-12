@@ -5,9 +5,12 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from stock_market_strategy_analysis.indicators import calculate_rsi, \
+from datetime import datetime, date, timedelta
+from dateutil.relativedelta import relativedelta
+from indicators import calculate_rsi, \
     calculate_macd, calculate_bollinger_bands, calculate_ema, calculate_sma
 
+from sklearn.model_selection import train_test_split
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 
@@ -164,239 +167,159 @@ def macd_with_rsi(df, close_price):
 
     return df
 
-# Function to identify points based on condition
-def identify_signals(df):
-    df.loc[:, 'ema_diff'] = df['ema_50'] - df['ema_100']
-
-    crossover_points = pd.DataFrame(df.loc[df['ema_diff'].between(-1, 1),
-                                    ['close', 'ema_50', 'ema_100', 'ema_diff']])
-    crossover_points['diff'] = crossover_points['ema_50'].diff()
-
-    crossover_points = crossover_points.dropna(axis=0)
-
-    for i, val in enumerate(crossover_points.loc[:, 'diff'].to_list()[:-2]):
-        if val < 0:
-            if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i - 1]:crossover_points.index[i + 2], 'diff'].min()) \
-                    & (crossover_points.loc[crossover_points.index[i], 'ema_diff'] < crossover_points.loc[crossover_points.index[i + 1], 'ema_diff']):
-                crossover_points.loc[crossover_points.index[i], 'position'] = 'buy'
-            else:
-                crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
-
-        else:
-            if (not -10 < val < 10) & (val == crossover_points.loc[crossover_points.index[i - 1]:crossover_points.index[i + 2], 'diff'].max()) \
-                    & (crossover_points.loc[crossover_points.index[i - 1], 'ema_diff'] > crossover_points.loc[crossover_points.index[i], 'ema_diff']):
-                crossover_points.loc[crossover_points.index[i], 'position'] = 'sell'
-            else:
-                crossover_points.loc[crossover_points.index[i], 'position'] = 'nothing'
-
-    return crossover_points
-
 # Function to create buy-sell signals wrt conditions for strategy 1
 def get_signals_for_strategy_1(df):
-    buy_sell_points = df[(df['position'] != 'nothing')]
-    buy_sell_points = buy_sell_points.loc[:buy_sell_points.index[-3], :]
+    df['signal'] = 0
+    df['position'] = None
 
-    buy_sell_points = identify_buy_sell_points(buy_sell_points)
+    for n in range(1, len(df)):
+        if df['ema_50'][n] > df['ema_100'][n] and df['ema_50'][n - 1] <= df['ema_100'][n - 1]:
+            df['signal'][n] = 1
+            df['position'][n] = 'buy'
 
-    return buy_sell_points
+        elif df['ema_50'][n] < df['ema_100'][n] and df['ema_50'][n - 1] >= df['ema_100'][n - 1]:
+            df['signal'][n] = -1
+            df['position'][n] = 'sell'
+        else:
+            df['signal'][n] = 0
+            df['position'][n] = 'hold'
+
+    return df
 
 # Function to create buy-sell signals wrt conditions for strategy 2
 def get_signals_for_strategy_2(df):
-    df.loc[:, 'buy_signal'] = np.where((df['rsi'] > 0) & (df['rsi'] <= 40) &
-                                       (df['close'] < df['lower_bollinger_band']),
-                                        1, 0)
+    df['signal'] = 0
+    df['position'] = None
+    trade_position = False
 
-    df.loc[:, 'sell_signal'] = np.where((df['rsi'] >= 60) & (df['rsi'] < 100) &
-                                        (df['close'] > df['upper_bollinger_band']),
-                                        1, 0)
+    for n in range(1, len(df)):
+        if (df['rsi'][n] > 0) and (df['rsi'][n] <= 30) and (df['close'][n] < df['lower_bollinger_band'][n]) \
+                and (df['close'][n - 1] >= df['lower_bollinger_band'][n - 1]) and not trade_position:
+            df['signal'][n] = 1
+            df['position'][n] = 'buy'
+            trade_position = True
 
-    buy_sell_points = df.loc[(df['buy_signal'] == 1) | (df['sell_signal'] == 1), :]
+        elif (df['rsi'][n] >= 70) and (df['rsi'][n] < 100) and (df['close'][n] > df['upper_bollinger_band'][n]) \
+                and (df['close'][n - 1] <= df['upper_bollinger_band'][n - 1]) and trade_position:
+            df['signal'][n] = -1
+            df['position'][n] = 'sell'
+            trade_position = False
 
-    buy_sell_points.loc[:, 'position'] = np.where(buy_sell_points['buy_signal'] == 1, 'buy', 'sell')
+        else:
+            df['signal'][n] = 0
+            df['position'][n] = 'hold'
 
-    buy_sell_points = identify_buy_sell_points(buy_sell_points)
-
-    return buy_sell_points
+    return df
 
 # Function to create buy-sell signals wrt conditions for strategy 3
 def get_signals_for_strategy_3(df):
-    df.loc[:, 'buy_signal'] = np.where((df['macd_line'] < 0) &
-                                       (df['macd_line'] > df['signal_line']),
-                                        1, 0)
+    df['signal'] = 0
+    df['position'] = None
+    trade_position = False
 
-    df.loc[:, 'sell_signal'] = np.where((df['macd_line'] > 0) &
-                                        (df['macd_line'] < df['signal_line']),
-                                         1, 0)
+    for n in range(1, len(df)):
+        if (df['macd_line'][n] < 0) and (df['signal_line'][n] < 0) and (df['macd_line'][n] > df['signal_line'][n]) and \
+                (df['close'][n] > df['ema_200'][n]) and (df['close'][n - 1] <= df['ema_200'][n - 1]) \
+                and not trade_position:
+            df['signal'][n] = 1
+            df['position'][n] = 'buy'
+            trade_position = True
 
-    buy_sell_points = df.loc[(df['buy_signal'] == 1) | (df['sell_signal'] == 1), :]
+        elif (df['macd_line'][n] > 0) and (df['signal_line'][n] > 0) and (df['macd_line'][n] < df['signal_line'][n]) and \
+                (df['close'][n] < df['ema_200'][n]) and (df['close'][n - 1] >= df['ema_200'][n - 1]) and \
+                trade_position:
+            df['signal'][n] = -1
+            df['position'][n] = 'sell'
+            trade_position = False
 
-    return buy_sell_points
-
-# Function to identify buy-sell points combining both indicators
-def filter_buy_sell_points(df):
-    temp = df.groupby((df['position'] != df['position'].shift()).cumsum()).apply(
-                        lambda x: (x.index[0], x.index[-1]))
-
-    for tup in temp:
-        if len(df.loc[tup[0]:tup[1], :]) > 1:
-            if df.loc[tup[0]:tup[1], 'buy_signal'].apply(lambda x: True if x == 1 else False).all():
-                if df.loc[tup[0]:tup[1], :].apply(lambda x: True if x.close > x.ema_200 else False, axis=1).all():
-                    min_value = pd.to_datetime(df.loc[tup[0]:tup[1], 'close'].idxmin())
-                    df.loc[tup[0]:tup[1], 'position'] = np.where(
-                        df.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
-                else:
-                    df.loc[tup[0]:tup[1], 'position'] = 'nothing'
-
-            elif df.loc[tup[0]:tup[1], 'sell_signal'].apply(lambda x: True if x == 1 else False).all():
-                if df.loc[tup[0]:tup[1], :].apply(lambda x: True if x.close < x.ema_200 else False,
-                                                               axis=1).all():
-                    max_value = pd.to_datetime(df.loc[tup[0]:tup[1], 'close'].idxmax())
-                    df.loc[tup[0]:tup[1], 'position'] = np.where(
-                        df.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
-                else:
-                    df.loc[tup[0]:tup[1], 'position'] = 'nothing'
-
-    df = df[df.position != 'nothing']
+        else:
+            df['signal'][n] = 0
+            df['position'][n] = 'hold'
 
     return df
 
 # Function to create buy-sell signals wrt conditions for strategy 4
 def get_signals_for_strategy_4(df):
-    df.loc[:, 'buy_signal'] = np.where((df['rsi'] > 0) & (df['rsi'] <= 40) &
-                                       (df['macd_line'] < 0) & (df['macd_line'] > df['signal_line']),
-                                        1, 0)
+    df['signal'] = 0
+    df['position'] = None
+    trade_position = False
 
-    df.loc[:, 'sell_signal'] = np.where((df['rsi'] >= 60) & (df['rsi'] < 100) &
-                                        (df['macd_line'] > 0) & (df['macd_line'] < df['signal_line']),
-                                         1, 0)
+    for n in range(1, len(df)):
+        if (df['rsi'][n] > 0) and (df['rsi'][n] <= 30) and (df['macd_line'][n] < 0) and (df['signal_line'][n] < 0) and \
+                (df['macd_line'][n] > df['signal_line'][n]) and not trade_position:
+            df['signal'][n] = 1
+            df['position'][n] = 'buy'
+            trade_position = True
 
-    buy_sell_points = df.loc[(df['buy_signal'] == 1) | (df['sell_signal'] == 1), :]
-    buy_sell_points.loc[:, 'position'] = np.where(buy_sell_points['buy_signal'] == 1, 'buy', 'sell')
+        elif (df['rsi'][n] >= 70) and (df['rsi'][n] < 100) and (df['macd_line'][n] > 0) and (df['signal_line'][n] > 0) and \
+                (df['macd_line'][n] < df['signal_line'][n]) and trade_position:
+            df['signal'][n] = -1
+            df['position'][n] = 'sell'
+            trade_position = False
 
-    buy_sell_points = identify_buy_sell_points(buy_sell_points)
-
-    return buy_sell_points
-
-# Function to identify the best suitable buy sell points
-def identify_buy_sell_points(df):
-    temp = df.groupby((df['position'] != df['position'].shift()).cumsum()).apply(
-        lambda x: (x.index[0], x.index[-1]))
-
-    for tup in temp:
-        if len(df.loc[tup[0]:tup[1], :]) > 1:
-            if df.loc[tup[0], 'position'] == 'buy':
-                min_value = pd.to_datetime(df.loc[tup[0]:tup[1], 'close'].idxmin())
-                df.loc[tup[0]:tup[1], 'position'] = np.where(
-                    df.loc[tup[0]:tup[1], 'position'].index == min_value, 'buy', 'nothing')
-
-            elif df.loc[tup[0], 'position'] == 'sell':
-                max_value = pd.to_datetime(df.loc[tup[0]:tup[1], 'close'].idxmax())
-                df.loc[tup[0]:tup[1], 'position'] = np.where(
-                    df.loc[tup[0]:tup[1], 'position'].index == max_value, 'sell', 'nothing')
+        else:
+            df['signal'][n] = 0
+            df['position'][n] = 'hold'
 
     return df
 
 # Function to calculate the capital and returns at every buy-sell points
 def calculate_returns(df):
-    capital_to_invest = 100000
-    df = df[df.position != 'nothing']
-    df.position = df.position.map({'buy': 1, 'sell': 0})
+    df['daily_returns'] = df['close'].pct_change()
+    df['strategy_returns'] = df['daily_returns'] * df['signal'].shift(1)
+    df['cum_returns'] = (df['strategy_returns'] + 1).cumprod()
 
-    if df.loc[df.index[0], 'position'] == 0:
-        df = df.loc[df.index[1]:, :]
+    initial_amount_invested = 10000
 
-    for idx in df.index:
-        idx_position = df.index.get_loc(idx)
+    df['portfolio_amount'] = initial_amount_invested * df['cum_returns']
+    df['perc'] = 0.2
 
-        if df.loc[idx, 'position'] == 1:
-            if idx_position == 0:
-                df.loc[idx, 'capital'] = capital_to_invest
-                df.loc[idx, 'units_bought_or_sold'] = math.floor(df.loc[idx, 'capital'] /
-                                                                            df.loc[idx, 'close'])
-                df.loc[idx, 'returns'] = df.loc[idx, 'units_bought_or_sold'] * \
-                                                    df.loc[idx, 'close']
-            else:
-                df.loc[idx, 'capital'] = df.loc[df.index[idx_position - 1], 'capital']
-                df.loc[idx, 'units_bought_or_sold'] = math.floor(df.loc[idx, 'capital'] /
-                                                                            df.loc[idx, 'close'])
-                df.loc[idx, 'returns'] = df.loc[idx, 'units_bought_or_sold'] * \
-                                                    df.loc[idx, 'close']
+    start_year = df.index[0].year
+    current_year = df.index[-1].year
+    total_years = current_year - start_year
 
-        else:
-            if idx_position == 0:
-                continue
-            else:
-                close_diff = df.loc[idx, 'close'] - df.loc[df.index[idx_position - 1], 'close']
-                df.loc[idx, 'units_bought_or_sold'] = df.loc[df.index[idx_position - 1], 'units_bought_or_sold']
-                df.loc[idx, 'returns'] = df.loc[idx, 'units_bought_or_sold'] * close_diff
-                df.loc[idx, 'capital'] = df.loc[idx, 'returns'] + df.loc[df.index[idx_position - 1], 'returns']
+    annual_return = (1 + df['cum_returns'].iloc[-1]) ** (1/total_years) - 1
+    portfolio_amount = df['portfolio_amount'].iloc[-1]
 
-    df.loc[:, '% returns'] = df.loc[:, 'returns'].pct_change()
+    return annual_return, portfolio_amount
 
-    returns = get_total_returns(df)
+def calculate_cumulative_returns(df):
+    current_signal = None
+    price_bought = 0
+    investment_amount = 10000
+    df['cumulative_returns'] = 0
+    df['investment_value'] = 0
 
-    return returns
+    last_generated_value = 0
 
-# function to calculate the total return given by the strategy
-def get_total_returns(ret_df):
-    daily_returns = ret_df.loc[:, '% returns'].dropna()
+    for i in range(1, len(df)):
+        if df['position'][i] == 'buy':
+            price_bought = df['close'][i]
+            current_signal = 1
+            df['investment_value'][i] = investment_amount
+            last_generated_value = investment_amount
 
-    cumulative_returns = ((1 + daily_returns).cumprod() - 1)
+        elif df['position'][i] == 'sell' and current_signal == 1:
+            percentage_return = (df['close'][i] - price_bought) / price_bought
+            df['cumulative_returns'][i] = percentage_return
+            investment_amount *= (1 + percentage_return)
+            df['investment_value'][i] = investment_amount
+            last_generated_value = investment_amount
+            current_signal = None
 
-    cum_return_percent = cumulative_returns * 100
+        elif df['position'][i] == 'hold':
+            df['investment_value'][i] = last_generated_value
 
-    total = cumulative_returns.loc[cumulative_returns.index[-1]] * 100
+    cumulative_return = (1 + df['cumulative_returns'].sum()) - 1
 
-    return total, cum_return_percent
+    return cumulative_return, investment_amount
 
-# Function to merge all data points
-def merge_data(data_subset, position_data):
-    df = pd.concat([data_subset, position_data.loc[:, 'position']], axis=1)
-    df.position = df.position.fillna('nothing')
-    df = df.drop(['buy_signal', 'sell_signal'], axis=1)
-    df.position = df.position.map({'buy': 1, 'sell': -1, 'nothing': 0})
+def calculate_annual_return(df, cumulative_return):
+    date_diff = relativedelta(df.index[0], df.index[-1])
+    total_years = date_diff.years + \
+                  date_diff.months / 12 + \
+                  date_diff.days / 365.25
 
-    return df
+    annual_return = (1 + cumulative_return)**(1/total_years) - 1
 
-# Function to remove volatility and make TS stationary
-def normalize_data(price):
-    price_diff = price.diff().dropna()
-    price_std = price_diff.groupby([price_diff.index.year, price_diff.index.month]).std()
-    price_volatility = price_diff.index.map(lambda dt: price_std.loc[(dt.year, dt.month)])
-    price_data = price_diff / price_volatility
-
-    return price_data
-
-
-# Function to implement the ADABoost classification
-
-def adaboost_classification(df):
-    X = df.columns[:-1].to_list()
-    y = [df.columns[-1]]
-
-    start_date = df.index[0].date()
-    end_date = date(2022, 12, 31)
-
-    diff_in_days = (end_date - start_date).days
-    next_date = diff_in_days + 1
-
-    train_start_index = df.index[0]
-    train_end_index = df.index[diff_in_days]
-
-    test_start_index = df.index[next_date]
-
-    X_train = df.loc[train_start_index:train_end_index, X]
-    X_test = df.loc[test_start_index:, X]
-
-    y_train = df.loc[train_start_index:train_end_index, y]
-    y_test = df.loc[test_start_index:, y]
-
-    ab_classifier = AdaBoostClassifier(
-        DecisionTreeClassifier(max_depth=len(df.columns[1:-1])), n_estimators=750
-    )
-
-    ab_classifier.fit(X_train, y_train)
-
-    y_pred = ab_classifier.predict(X_test)
-
-    return y_test, y_pred
+    return annual_return

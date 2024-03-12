@@ -10,7 +10,7 @@ def calculate_std_ma(price_col, period):
     return std_ma
 
 def calculate_ema(price_col, period):
-    ema = pd.Series(price_col.ewm(span=period, min_periods=period).mean())
+    ema = pd.Series(price_col.ewm(span=period, adjust=False).mean())
     return ema
 
 def calculate_rsi(price_col, rsi_period):
