@@ -323,3 +323,11 @@ def calculate_annual_return(df, cumulative_return):
     annual_return = (1 + cumulative_return)**(1/total_years) - 1
 
     return annual_return
+
+def calculate_roi(investment_amount):
+    initial_amount = 10000
+    final_amount = investment_amount
+
+    roi = ((final_amount - initial_amount) / initial_amount) * 100
+
+    return roi

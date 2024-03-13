@@ -139,6 +139,44 @@ plt.xlabel('Date')
 plt.tight_layout()
 plt.show()
 
+#%% Calculate returns
+
+cum_ret_2, portfolio_amount_2 = mod.calculate_cumulative_returns(buy_sell_data_2)
+
+annual_return_2 = mod.calculate_annual_return(buy_sell_data_2, cumulative_return=cum_ret_2)
+
+return_on_investment_2 = mod.calculate_roi(portfolio_amount_2)
+
+print(f"ROI of strategy 2: {return_on_investment_2:.2f}%")
+print(f"Annual Return of strategy 2: {annual_return_2 * 100:.2f}%")
+print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_2:.2f}")
+
+#%% Visualize the cumulative returns over the investment period
+
+buy_sell_data_2['returns'] = buy_sell_data_2['cumulative_returns'].cumsum()
+
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+
+# Plot the cumulative returns
+ax1.plot(buy_sell_data_2.index, buy_sell_data_2['returns'], color='darkcyan', label='Cumulative Returns')
+ax1.set_ylabel('Cumulative Returns')
+ax1.tick_params('y')
+ax1.grid()
+ax1.text(x=0.5, y=1, s='Cumulative returns for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax1.transAxes)
+
+# Plot the portfolio amount
+ax2.plot(buy_sell_data_2.index, buy_sell_data_2['investment_value'], color='indianred', label='Portfolio Amount')
+ax2.set_xlabel('Date')
+ax2.set_ylabel('Portfolio Amount')
+ax2.tick_params('y')
+ax2.grid()
+ax1.text(x=0.5, y=1, s='Investment amount for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax2.transAxes)
+
+plt.tight_layout()
+plt.show()
+
 #%% STRATEGY - 3
 
 # Get the technical indicators for the strategy 3
@@ -180,6 +218,44 @@ ax2.axhline(y=0, color='slategrey', linestyle='-')
 ax2.set_ylim([-100, 100])
 
 plt.xlabel('Date')
+plt.tight_layout()
+plt.show()
+
+#%% Calculate returns
+
+cum_ret_3, portfolio_amount_3 = mod.calculate_cumulative_returns(buy_sell_data_3)
+
+annual_return_3 = mod.calculate_annual_return(buy_sell_data_3, cumulative_return=cum_ret_3)
+
+return_on_investment_3 = mod.calculate_roi(portfolio_amount_3)
+
+print(f"ROI of strategy 2: {return_on_investment_3:.2f}%")
+print(f"Annual Return of strategy 2: {annual_return_3 * 100:.2f}%")
+print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_3:.2f}")
+
+#%% Visualize the cumulative returns over the investment period
+
+buy_sell_data_3['returns'] = buy_sell_data_3['cumulative_returns'].cumsum()
+
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+
+# Plot the cumulative returns
+ax1.plot(buy_sell_data_3['returns'], color='darkcyan', label='Cumulative Returns')
+ax1.set_ylabel('Cumulative Returns')
+ax1.tick_params('y')
+ax1.grid()
+ax1.text(x=0.5, y=1, s='Cumulative returns for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax1.transAxes)
+
+# Plot the portfolio amount
+ax2.plot(buy_sell_data_3.index, buy_sell_data_3['investment_value'], color='indianred', label='Portfolio Amount')
+ax2.set_xlabel('Date')
+ax2.set_ylabel('Portfolio Amount')
+ax2.tick_params('y')
+ax2.grid()
+ax1.text(x=0.5, y=1, s='Investment amount for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax2.transAxes)
+
 plt.tight_layout()
 plt.show()
 
@@ -227,6 +303,44 @@ ax3.axhline(y=70, color='slategrey', linestyle='-')
 ax3.set_ylim([0, 100])
 
 plt.xlabel('Date')
+plt.tight_layout()
+plt.show()
+
+#%% Calculate returns
+
+cum_ret_4, portfolio_amount_4 = mod.calculate_cumulative_returns(buy_sell_data_4)
+
+annual_return_4 = mod.calculate_annual_return(buy_sell_data_4, cumulative_return=cum_ret_4)
+
+return_on_investment_4 = mod.calculate_roi(portfolio_amount_4)
+
+print(f"ROI of strategy 2: {return_on_investment_4:.2f}%")
+print(f"Annual Return of strategy 2: {annual_return_4 * 100:.2f}%")
+print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_4:.2f}")
+
+#%% Visualize the cumulative returns over the investment period
+
+buy_sell_data_4['returns'] = buy_sell_data_4['cumulative_returns'].cumsum()
+
+fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+
+# Plot the cumulative returns
+ax1.plot(buy_sell_data_4['returns'], color='darkcyan', label='Cumulative Returns')
+ax1.set_ylabel('Cumulative Returns')
+ax1.tick_params('y')
+ax1.grid()
+ax1.text(x=0.5, y=1, s='Cumulative returns for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax1.transAxes)
+
+# Plot the portfolio amount
+ax2.plot(buy_sell_data_4.index, buy_sell_data_4['investment_value'], color='indianred', label='Portfolio Amount')
+ax2.set_xlabel('Date')
+ax2.set_ylabel('Portfolio Amount')
+ax2.tick_params('y')
+ax2.grid()
+ax1.text(x=0.5, y=1, s='Investment amount for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+         ha='center', va='bottom', transform=ax2.transAxes)
+
 plt.tight_layout()
 plt.show()
 
