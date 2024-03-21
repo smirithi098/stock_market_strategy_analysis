@@ -22,10 +22,9 @@ warnings.filterwarnings('ignore')
 
 # Function to clean and prepare the initial data loaded from csv file
 def prepare_data(df):
-    df = df.drop(['series ', '52W H ', '52W L ', 'VALUE ', 'No of trades '],
+    df = df.drop(['series ', 'PREV. CLOSE ', 'ltp ', 'vwap ', '52W H ', '52W L ', 'VALUE ', 'No of trades '],
                  axis=1)
-    df = df.rename(columns={'OPEN ': 'open', 'HIGH ': 'high', 'LOW ': 'low', 'PREV. CLOSE ': 'prev_close',
-                            'ltp ': 'ltp', 'close ': 'close', 'vwap ': 'vwap', 'VOLUME ': 'volume'})
+    df = df.rename(columns={'OPEN ': 'open', 'HIGH ': 'high', 'LOW ': 'low', 'close ': 'close', 'VOLUME ': 'volume'})
 
     df = df.drop_duplicates()
     df.index = pd.to_datetime(df.index)
@@ -262,26 +261,6 @@ def get_signals_for_strategy_4(df):
             df['position'][n] = 'hold'
 
     return df
-
-# Function to calculate the capital and returns at every buy-sell points
-def calculate_returns(df):
-    df['daily_returns'] = df['close'].pct_change()
-    df['strategy_returns'] = df['daily_returns'] * df['signal'].shift(1)
-    df['cum_returns'] = (df['strategy_returns'] + 1).cumprod()
-
-    initial_amount_invested = 10000
-
-    df['portfolio_amount'] = initial_amount_invested * df['cum_returns']
-    df['perc'] = 0.2
-
-    start_year = df.index[0].year
-    current_year = df.index[-1].year
-    total_years = current_year - start_year
-
-    annual_return = (1 + df['cum_returns'].iloc[-1]) ** (1/total_years) - 1
-    portfolio_amount = df['portfolio_amount'].iloc[-1]
-
-    return annual_return, portfolio_amount
 
 def calculate_cumulative_returns(df):
     current_signal = None

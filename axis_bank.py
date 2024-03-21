@@ -69,26 +69,16 @@ print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_
 
 #%% Visualize the cumulative returns over the investment period
 
-buy_sell_data_1['returns'] = buy_sell_data_1['cumulative_returns'].cumsum()
-
-fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+fig, ax1 = plt.subplots(nrows=1, figsize=(15, 8))
 
 # Plot the cumulative returns
-ax1.plot(buy_sell_data_1.index, buy_sell_data_1['returns'], color='darkcyan', label='Cumulative Returns')
-ax1.set_ylabel('Cumulative Returns')
+ax1.plot(buy_sell_data_1.index, buy_sell_data_1['investment_value'], color='darkcyan', label='Portfolio Amount')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Portfolio Amount')
 ax1.tick_params('y')
 ax1.grid()
-ax1.text(x=0.5, y=1, s='Cumulative returns for the 50 & 100 day EMA crossover strategy', fontsize=12, weight='bold',
-         ha='center', va='bottom', transform=ax1.transAxes)
-
-# Plot the portfolio amount
-ax2.plot(buy_sell_data_1.index, buy_sell_data_1['investment_value'], color='indianred', label='Portfolio Amount')
-ax2.set_xlabel('Date')
-ax2.set_ylabel('Portfolio Amount')
-ax2.tick_params('y')
-ax2.grid()
 ax1.text(x=0.5, y=1, s='Investment amount for the 50 & 100 day EMA crossover strategy', fontsize=12, weight='bold',
-         ha='center', va='bottom', transform=ax2.transAxes)
+         ha='center', va='bottom', transform=ax1.transAxes)
 
 plt.tight_layout()
 plt.show()
@@ -153,30 +143,19 @@ print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_
 
 #%% Visualize the cumulative returns over the investment period
 
-buy_sell_data_2['returns'] = buy_sell_data_2['cumulative_returns'].cumsum()
-
-fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+fig, ax1 = plt.subplots(nrows=1, figsize=(15, 8))
 
 # Plot the cumulative returns
-ax1.plot(buy_sell_data_2.index, buy_sell_data_2['returns'], color='darkcyan', label='Cumulative Returns')
-ax1.set_ylabel('Cumulative Returns')
+ax1.plot(buy_sell_data_2.index, buy_sell_data_2['investment_value'], color='darkcyan', label='Portfolio Amount')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Portfolio Amount')
 ax1.tick_params('y')
 ax1.grid()
-ax1.text(x=0.5, y=1, s='Cumulative returns for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
-         ha='center', va='bottom', transform=ax1.transAxes)
-
-# Plot the portfolio amount
-ax2.plot(buy_sell_data_2.index, buy_sell_data_2['investment_value'], color='indianred', label='Portfolio Amount')
-ax2.set_xlabel('Date')
-ax2.set_ylabel('Portfolio Amount')
-ax2.tick_params('y')
-ax2.grid()
 ax1.text(x=0.5, y=1, s='Investment amount for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
-         ha='center', va='bottom', transform=ax2.transAxes)
+         ha='center', va='bottom', transform=ax1.transAxes)
 
 plt.tight_layout()
 plt.show()
-
 #%% STRATEGY - 3
 
 # Get the technical indicators for the strategy 3
@@ -235,26 +214,16 @@ print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_
 
 #%% Visualize the cumulative returns over the investment period
 
-buy_sell_data_3['returns'] = buy_sell_data_3['cumulative_returns'].cumsum()
-
-fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+fig, ax1 = plt.subplots(nrows=1, figsize=(15, 8))
 
 # Plot the cumulative returns
-ax1.plot(buy_sell_data_3['returns'], color='darkcyan', label='Cumulative Returns')
-ax1.set_ylabel('Cumulative Returns')
+ax1.plot(buy_sell_data_3.index, buy_sell_data_3['investment_value'], color='darkcyan', label='Portfolio Amount')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Portfolio Amount')
 ax1.tick_params('y')
 ax1.grid()
-ax1.text(x=0.5, y=1, s='Cumulative returns for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+ax1.text(x=0.5, y=1, s='Investment amount for the MACD with 200-day EMA strategy', fontsize=12, weight='bold',
          ha='center', va='bottom', transform=ax1.transAxes)
-
-# Plot the portfolio amount
-ax2.plot(buy_sell_data_3.index, buy_sell_data_3['investment_value'], color='indianred', label='Portfolio Amount')
-ax2.set_xlabel('Date')
-ax2.set_ylabel('Portfolio Amount')
-ax2.tick_params('y')
-ax2.grid()
-ax1.text(x=0.5, y=1, s='Investment amount for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
-         ha='center', va='bottom', transform=ax2.transAxes)
 
 plt.tight_layout()
 plt.show()
@@ -320,27 +289,122 @@ print(f"Portfolio Amount at the End of the Investment Period: {portfolio_amount_
 
 #%% Visualize the cumulative returns over the investment period
 
-buy_sell_data_4['returns'] = buy_sell_data_4['cumulative_returns'].cumsum()
-
-fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(15, 8), sharex=True)
+fig, ax1 = plt.subplots(nrows=1, figsize=(15, 8))
 
 # Plot the cumulative returns
-ax1.plot(buy_sell_data_4['returns'], color='darkcyan', label='Cumulative Returns')
-ax1.set_ylabel('Cumulative Returns')
+ax1.plot(buy_sell_data_4.index, buy_sell_data_4['investment_value'], color='darkcyan', label='Portfolio Amount')
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Portfolio Amount')
 ax1.tick_params('y')
 ax1.grid()
-ax1.text(x=0.5, y=1, s='Cumulative returns for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
+ax1.text(x=0.5, y=1, s='Investment amount for the MACD with RSI strategy', fontsize=12, weight='bold',
          ha='center', va='bottom', transform=ax1.transAxes)
 
-# Plot the portfolio amount
-ax2.plot(buy_sell_data_4.index, buy_sell_data_4['investment_value'], color='indianred', label='Portfolio Amount')
-ax2.set_xlabel('Date')
-ax2.set_ylabel('Portfolio Amount')
-ax2.tick_params('y')
-ax2.grid()
-ax1.text(x=0.5, y=1, s='Investment amount for the Bollinger bands with RSI strategy', fontsize=12, weight='bold',
-         ha='center', va='bottom', transform=ax2.transAxes)
-
 plt.tight_layout()
+plt.show()
+
+#%% Decision tree Classification Model
+
+from random import randint
+from sklearn.model_selection import RepeatedStratifiedKFold, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import confusion_matrix, classification_report
+
+#%% Load dataset
+df = pd.read_csv('S:/Dissertation 2023/Stock market analysis/stock_market_strategy_analysis/data_files/axis_s1_final.csv')
+
+#%% Model 1: Decision tree without SMOTE analysis - Imbalanced dataset
+
+# Identify predictors and target variable
+X_1 = df[['close', 'ema_50', 'ema_100']]
+y_1 = df['signal']
+
+# Split data into train and test set
+X_train_1, X_test_1, y_train_1, y_test_1 = train_test_split(X_1, y_1, test_size=0.3, random_state=789)
+
+# Initialize the Decision Tree Classifier with default parameters
+model_1 = DecisionTreeClassifier()
+
+# Fit the model to the training data
+model_1.fit(X_train_1, y_train_1)
+
+# Make predictions on the test set
+y_pred_1 = model_1.predict(X_test_1)
+
+# Evaluate the model's accuracy
+accuracy_1 = accuracy_score(y_test_1, y_pred_1)
+print(f"Accuracy for default Decision tree model: {accuracy_1*100:.2f}%")
+
+# Classification report
+print("Classification Report - Model 1\n")
+print(classification_report(y_test_1, y_pred_1))
+
+# Visualize the confusion matrix
+cm_1 = confusion_matrix(y_test_1, y_pred_1)
+
+# Visualize the confusion matrix
+plt.figure(figsize=(10, 7))
+sns.heatmap(cm_1, annot=True, fmt='d')
+plt.xlabel('Predicted')
+plt.ylabel('Truth')
+plt.title("Confusion matrix - Imbalanced data")
+plt.show()
+
+#%% Model 2: Decision tree model with SMOTE analysis on both train and test set
+
+# Split the data into buy+50% hold and sell+50% hold
+df1 = pd.concat([df[df.signal == 1], df[df.signal == 0].iloc[:3323]])
+df2 = pd.concat([df[df.signal == -1], df[df.signal == 0].iloc[:3323]])
+
+# SMOTE Analysis
+
+X1 = df1[['close', 'ema_50', 'ema_100']]
+y1 = df1['signal']
+sm = SMOTE(random_state=657)
+X1_new, y1_new = sm.fit_resample(X1, y1)
+
+X2 = df2[['close', 'ema_50', 'ema_100']]
+y2 = df2['signal']
+sm = SMOTE()
+X2_new, y2_new = sm.fit_resample(X2, y2)
+
+# New dataframes with balanced labels
+
+X_new = pd.concat([X1_new, X2_new])
+y_new = pd.concat([y1_new, y2_new])
+
+# Split data into train and test set
+X_train_2, X_test_2, y_train_2, y_test_2 = train_test_split(X_new, y_new, test_size=0.3, random_state=789)
+
+# Initialize the Decision Tree Classifier with default parameters
+model_2 = DecisionTreeClassifier()
+
+# Fit the model to the training data
+model_2.fit(X_train_2, y_train_2)
+
+# Make predictions on the test set
+y_pred_2 = model_2.predict(X_test_2)
+
+# Evaluate the model's accuracy
+accuracy_2 = accuracy_score(y_test_1, y_pred_1)
+print(f"Accuracy for Decision tree model with SMOTE: {accuracy_2*100:.2f}%")
+
+# Classification report
+print("Classification Report - Model 2\n")
+print(classification_report(y_test_2, y_pred_2))
+
+# Visualize the confusion matrix
+cm_2 = confusion_matrix(y_test_2, y_pred_2)
+
+# Visualize the confusion matrix
+plt.figure(figsize=(10, 7))
+sns.heatmap(cm_2, annot=True, fmt='d')
+plt.xlabel('Predicted')
+plt.ylabel('Truth')
+plt.title("Confusion matrix - Balanced data with SMOTE")
 plt.show()
 
