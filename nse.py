@@ -78,7 +78,7 @@ if __name__ == '__main__':
     from datetime import date
     from nse import NSE
 
-    stock_list = ['HDFCBANK', 'ICICIBANK', 'KOTAKBANK', 'SBIN', 'AXISBANK']
+    stock_list = ['AXISBANK', 'TCS', 'RELIANCE', 'ITC', 'BHARTIARTL']
 
     stock_series = "EQ"
     year = 2006
